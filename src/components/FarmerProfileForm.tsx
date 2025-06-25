@@ -1,63 +1,58 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Mail, MessageCircle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { userStore, User as UserType } from "@/store/userStore";
+import { userStore, User } from "@/store/userStore";
+import { languageStore } from "@/store/languageStore";
 
 interface FarmerProfileFormProps {
-  user: UserType;
+  user: User;
   onProfileComplete: () => void;
 }
 
 const FarmerProfileForm = ({ user, onProfileComplete }: FarmerProfileFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    farmerName: user.name || '',
-    phoneNumber: user.phone || '',
+    name: user.name || '',
+    phone: user.phone || '',
     email: user.email || '',
-    whatsappNumber: ''
+    whatsappNumber: user.whatsappNumber || ''
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const t = (key: string) => languageStore.translate(key);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.farmerName.trim() || !formData.phoneNumber.trim()) {
-      toast({
-        title: "Please fill required fields",
-        description: "Farmer name and phone number are required",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Update user profile with farmer details
-      userStore.updateUserProfile(user.id, {
-        name: formData.farmerName,
-        phone: formData.phoneNumber,
-        email: formData.email || user.email,
-        whatsappNumber: formData.whatsappNumber,
+      const success = userStore.updateUserProfile(user.id, {
+        ...formData,
         profileCompleted: true
       });
 
-      toast({
-        title: "Profile updated successfully!",
-        description: "You can now manage your farm and products",
-        className: "bg-green-50 border-green-200"
-      });
-
-      onProfileComplete();
+      if (success) {
+        toast({
+          title: "Profile updated successfully!",
+          description: "Welcome to your farmer dashboard!",
+          className: "bg-green-50 border-green-200"
+        });
+        onProfileComplete();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       toast({
-        title: "Error updating profile",
-        description: "Please try again",
+        title: "Error",
+        description: "Something went wrong. Please try again.",
         variant: "destructive"
       });
     }
@@ -66,85 +61,65 @@ const FarmerProfileForm = ({ user, onProfileComplete }: FarmerProfileFormProps) 
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <Card>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <User className="h-5 w-5" />
-            <span>Complete Your Farmer Profile</span>
-          </CardTitle>
+          <CardTitle>{t('profile.complete')}</CardTitle>
           <CardDescription>
-            Please provide your details to set up your farmer account
+            {t('profile.before_continue')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="farmerName" className="flex items-center space-x-1">
-                <User className="h-4 w-4" />
-                <span>Farmer Name *</span>
-              </Label>
+              <Label htmlFor="name">{t('auth.farmer_name')} *</Label>
               <Input
-                id="farmerName"
-                value={formData.farmerName}
-                onChange={(e) => setFormData({ ...formData, farmerName: e.target.value })}
-                placeholder="Enter your full name"
+                id="name"
+                type="text"
+                placeholder={t('auth.enter_farmer_name')}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber" className="flex items-center space-x-1">
-                <Phone className="h-4 w-4" />
-                <span>Phone Number *</span>
-              </Label>
+              <Label htmlFor="phone">{t('common.phone')} *</Label>
               <Input
-                id="phoneNumber"
+                id="phone"
                 type="tel"
-                value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                placeholder="Enter your phone number"
+                placeholder={t('auth.enter_phone')}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center space-x-1">
-                <Mail className="h-4 w-4" />
-                <span>Email (Optional)</span>
-              </Label>
+              <Label htmlFor="email">{t('profile.email_optional')}</Label>
               <Input
                 id="email"
                 type="email"
+                placeholder={t('auth.enter_email')}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Enter your email address"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="whatsappNumber" className="flex items-center space-x-1">
-                <MessageCircle className="h-4 w-4" />
-                <span>WhatsApp Number (Optional)</span>
-              </Label>
+              <Label htmlFor="whatsapp">{t('profile.whatsapp')}</Label>
               <Input
-                id="whatsappNumber"
+                id="whatsapp"
                 type="tel"
+                placeholder={t('profile.enter_whatsapp')}
                 value={formData.whatsappNumber}
                 onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                placeholder="Enter your WhatsApp number"
               />
             </div>
 
-            <div className="pt-4">
-              <Button 
-                type="submit" 
-                className="w-full bg-green-600 hover:bg-green-700"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Updating Profile...' : 'Complete Profile & Continue'}
-              </Button>
-            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? t('auth.processing') : t('common.save')}
+            </Button>
           </form>
         </CardContent>
       </Card>

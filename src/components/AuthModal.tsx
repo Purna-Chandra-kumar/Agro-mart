@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
 import { userStore } from "@/store/userStore";
+import { languageStore } from "@/store/languageStore";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -38,6 +40,8 @@ const AuthModal = ({
     dateOfBirth: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const t = (key: string) => languageStore.translate(key);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,174 +129,175 @@ const AuthModal = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            {mode === 'login' ? t('auth.welcome') : t('auth.create_account')}
           </DialogTitle>
           <DialogDescription>
             {mode === 'login' 
-              ? `Sign in to your ${userType} account`
-              : `Create a new ${userType} account`
+              ? (userType === 'buyer' ? t('auth.signin_buyer') : t('auth.signin_farmer'))
+              : (userType === 'buyer' ? t('auth.create_buyer') : t('auth.create_farmer'))
             }
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={userType} onValueChange={(value) => onSwitchUserType(value as 'buyer' | 'farmer')}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="buyer">Buyer</TabsTrigger>
-            <TabsTrigger value="farmer">Farmer</TabsTrigger>
+            <TabsTrigger value="buyer">{t('auth.buyer')}</TabsTrigger>
+            <TabsTrigger value="farmer">{t('auth.farmer')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value={userType} className="space-y-4">
-            {userType === 'farmer' && mode === 'login' && (
-              <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'aadhar')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="email">Email</TabsTrigger>
-                  <TabsTrigger value="aadhar">Aadhar</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value={authMethod}>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {authMethod === 'email' ? (
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="Enter your email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="password">Password</Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder="Enter your password"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor="aadhar">Aadhar Number</Label>
-                          <Input
-                            id="aadhar"
-                            type="text"
-                            placeholder="Enter your 12-digit Aadhar number"
-                            value={formData.aadharNumber}
-                            onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
-                            maxLength={12}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="dob">Date of Birth</Label>
-                          <Input
-                            id="dob"
-                            type="date"
-                            value={formData.dateOfBirth}
-                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </>
-                    )}
-                    
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? 'Processing...' : 'Sign In'}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+            {/* Authentication Method Toggle for Farmers */}
+            {userType === 'farmer' && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Authentication Method</Label>
+                <ToggleGroup 
+                  type="single" 
+                  value={authMethod} 
+                  onValueChange={(value) => value && setAuthMethod(value as 'email' | 'aadhar')}
+                  className="grid grid-cols-1 gap-2"
+                >
+                  <ToggleGroupItem value="email" className="justify-start">
+                    {t('auth.method_email')}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="aadhar" className="justify-start">
+                    {t('auth.method_aadhar')}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
             )}
 
-            {(userType === 'buyer' || mode === 'signup') && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {mode === 'signup' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Enter your full name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="Enter your phone number"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        required
-                      />
-                    </div>
-                    {userType === 'farmer' && (
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor="aadhar-signup">Aadhar Number (Optional)</Label>
-                          <Input
-                            id="aadhar-signup"
-                            type="text"
-                            placeholder="Enter your 12-digit Aadhar number"
-                            value={formData.aadharNumber}
-                            onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
-                            maxLength={12}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="dob-signup">Date of Birth (Optional)</Label>
-                          <Input
-                            id="dob-signup"
-                            type="date"
-                            value={formData.dateOfBirth}
-                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
-
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Common Farmer Name field for signup */}
+              {mode === 'signup' && userType === 'farmer' && (
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="farmer-name">{t('auth.farmer_name')}</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    id="farmer-name"
+                    type="text"
+                    placeholder={t('auth.enter_farmer_name')}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
+              )}
 
+              {/* Buyer name field for signup */}
+              {mode === 'signup' && userType === 'buyer' && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="name">{t('auth.full_name')}</Label>
                   <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    id="name"
+                    type="text"
+                    placeholder={t('auth.enter_name')}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
+              )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                </Button>
-              </form>
-            )}
+              {/* Phone field for signup */}
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">{t('common.phone')}</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder={t('auth.enter_phone')}
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Email & Password Method */}
+              {(userType === 'buyer' || authMethod === 'email') && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t('common.email')}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder={t('auth.enter_email')}
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t('common.password')}</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder={t('auth.enter_password')}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Aadhar Method */}
+              {userType === 'farmer' && authMethod === 'aadhar' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="aadhar">{t('auth.aadhar_number')}</Label>
+                    <Input
+                      id="aadhar"
+                      type="text"
+                      placeholder={t('auth.enter_aadhar')}
+                      value={formData.aadharNumber}
+                      onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                      maxLength={12}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dob">{t('auth.date_of_birth')}</Label>
+                    <Input
+                      id="dob"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Optional Aadhar fields for farmer signup with email method */}
+              {mode === 'signup' && userType === 'farmer' && authMethod === 'email' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="aadhar-signup">{t('auth.aadhar_optional')}</Label>
+                    <Input
+                      id="aadhar-signup"
+                      type="text"
+                      placeholder={t('auth.enter_aadhar')}
+                      value={formData.aadharNumber}
+                      onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                      maxLength={12}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dob-signup">{t('auth.dob_optional')}</Label>
+                    <Input
+                      id="dob-signup"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? t('auth.processing') : mode === 'login' ? t('auth.signin') : t('auth.create_account_btn')}
+              </Button>
+            </form>
 
             <div className="text-center">
               <Button 
@@ -303,8 +308,8 @@ const AuthModal = ({
                 }}
               >
                 {mode === 'login' 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"
+                  ? t('auth.no_account')
+                  : t('auth.have_account')
                 }
               </Button>
             </div>
