@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Phone, Search, Filter, Truck, User, ShoppingCart, Star } from "lucide-react";
-import { userStore, User, Farm, Product, DeliveryPartner } from "@/store/userStore";
+import { MapPin, Phone, Search, Filter, Truck, User as UserIcon, ShoppingCart, Star } from "lucide-react";
+import { userStore, type User, type Farm, type Product, type DeliveryPartner } from "@/store/userStore";
 import { languageStore } from "@/store/languageStore";
-import { getCurrentLocation, calculateDistance, formatDistance, Location } from "@/utils/locationUtils";
+import { getCurrentLocation, calculateDistance, formatDistance, type Location } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
 import DeliveryOptionsModal from "./DeliveryOptionsModal";
 
@@ -226,7 +225,7 @@ const BuyerDashboard = ({ user }: { user: User }) => {
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="flex items-center text-gray-600">
-                          <User className="h-4 w-4 mr-1" />
+                          <UserIcon className="h-4 w-4 mr-1" />
                           {product.farmerName}
                         </span>
                         <a href={`tel:${product.farmerPhone}`} className="flex items-center text-green-600 hover:text-green-700">
