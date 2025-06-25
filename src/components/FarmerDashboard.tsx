@@ -106,7 +106,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
     }
   };
 
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!farmLocation) {
       toast({
         title: "Please set farm location first",
@@ -141,8 +141,19 @@ const FarmerDashboard = ({ user }: { user: User }) => {
         setFarm(currentFarm);
       }
 
+      // Convert File to data URL string if image exists
+      let imageString: string | undefined = undefined;
+      if (newProduct.image) {
+        imageString = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(newProduct.image!);
+        });
+      }
+
       userStore.addProductToFarm(currentFarm.id, {
         ...newProduct,
+        image: imageString,
         farmerId: user.id,
         createdAt: new Date()
       });
