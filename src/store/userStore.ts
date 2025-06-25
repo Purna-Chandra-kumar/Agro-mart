@@ -1,4 +1,3 @@
-
 interface User {
   id: string;
   email: string;
@@ -6,6 +5,8 @@ interface User {
   type: 'buyer' | 'farmer' | 'delivery';
   verified: boolean;
   phone?: string;
+  aadharNumber?: string;
+  dateOfBirth?: string;
   location?: {
     lat: number;
     lng: number;
@@ -68,6 +69,8 @@ class UserStore {
       type: 'farmer',
       verified: true,
       phone: '+91 9876543211',
+      aadharNumber: '123456789012',
+      dateOfBirth: '1985-06-15',
       location: {
         lat: 28.6139,
         lng: 77.2090,
@@ -86,6 +89,7 @@ class UserStore {
         address: 'New Delhi, India'
       },
       products: [
+        // Leafy Greens
         {
           id: '1',
           farmerId: '2',
@@ -95,19 +99,275 @@ class UserStore {
           quantity: 50,
           price: 30,
           unit: 'kg',
-          description: 'Fresh organic spinach',
+          description: 'Fresh organic spinach leaves',
           createdAt: new Date()
         },
         {
           id: '2',
           farmerId: '2',
+          type: 'vegetable',
+          category: 'Leafy Greens',
+          name: 'Kale',
+          quantity: 25,
+          price: 45,
+          unit: 'kg',
+          description: 'Nutrient-rich kale leaves',
+          createdAt: new Date()
+        },
+        {
+          id: '3',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Leafy Greens',
+          name: 'Lettuce',
+          quantity: 30,
+          price: 35,
+          unit: 'kg',
+          description: 'Fresh crispy lettuce',
+          createdAt: new Date()
+        },
+        {
+          id: '4',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Leafy Greens',
+          name: 'Cabbage',
+          quantity: 40,
+          price: 25,
+          unit: 'kg',
+          description: 'Fresh green cabbage heads',
+          createdAt: new Date()
+        },
+        {
+          id: '5',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Leafy Greens',
+          name: 'Collard Greens',
+          quantity: 20,
+          price: 40,
+          unit: 'kg',
+          description: 'Fresh collard green leaves',
+          createdAt: new Date()
+        },
+        {
+          id: '6',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Leafy Greens',
+          name: 'Watercress',
+          quantity: 15,
+          price: 60,
+          unit: 'kg',
+          description: 'Fresh watercress with peppery flavor',
+          createdAt: new Date()
+        },
+        // Root Vegetables
+        {
+          id: '7',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Root Vegetables',
+          name: 'Carrots',
+          quantity: 60,
+          price: 40,
+          unit: 'kg',
+          description: 'Fresh orange carrots',
+          createdAt: new Date()
+        },
+        {
+          id: '8',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Root Vegetables',
+          name: 'Potatoes',
+          quantity: 100,
+          price: 20,
+          unit: 'kg',
+          description: 'Fresh farm potatoes',
+          createdAt: new Date()
+        },
+        {
+          id: '9',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Root Vegetables',
+          name: 'Sweet Potatoes',
+          quantity: 45,
+          price: 35,
+          unit: 'kg',
+          description: 'Sweet and nutritious sweet potatoes',
+          createdAt: new Date()
+        },
+        {
+          id: '10',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Root Vegetables',
+          name: 'Radish',
+          quantity: 25,
+          price: 30,
+          unit: 'kg',
+          description: 'Fresh white radish',
+          createdAt: new Date()
+        },
+        {
+          id: '11',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Root Vegetables',
+          name: 'Beetroot',
+          quantity: 35,
+          price: 45,
+          unit: 'kg',
+          description: 'Fresh red beetroot',
+          createdAt: new Date()
+        },
+        {
+          id: '12',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Root Vegetables',
+          name: 'Turnips',
+          quantity: 20,
+          price: 35,
+          unit: 'kg',
+          description: 'Fresh white turnips',
+          createdAt: new Date()
+        },
+        // Other Vegetables
+        {
+          id: '13',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Other Vegetables',
+          name: 'Broccoli',
+          quantity: 30,
+          price: 60,
+          unit: 'kg',
+          description: 'Fresh green broccoli heads',
+          createdAt: new Date()
+        },
+        {
+          id: '14',
+          farmerId: '2',
+          type: 'vegetable',
+          category: 'Other Vegetables',
+          name: 'Cauliflower',
+          quantity: 25,
+          price: 50,
+          unit: 'kg',
+          description: 'Fresh white cauliflower heads',
+          createdAt: new Date()
+        },
+        // Fruits
+        {
+          id: '15',
+          farmerId: '2',
           type: 'fruit',
           category: 'Fruits',
-          name: 'Mango',
-          quantity: 100,
+          name: 'Apples',
+          quantity: 80,
+          price: 120,
+          unit: 'kg',
+          description: 'Fresh red apples',
+          createdAt: new Date()
+        },
+        {
+          id: '16',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Fruits',
+          name: 'Bananas',
+          quantity: 60,
+          price: 40,
+          unit: 'kg',
+          description: 'Ripe yellow bananas',
+          createdAt: new Date()
+        },
+        {
+          id: '17',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Fruits',
+          name: 'Grapes',
+          quantity: 40,
           price: 80,
           unit: 'kg',
+          description: 'Sweet green grapes',
+          createdAt: new Date()
+        },
+        {
+          id: '18',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Fruits',
+          name: 'Mangoes',
+          quantity: 50,
+          price: 100,
+          unit: 'kg',
           description: 'Sweet Alphonso mangoes',
+          createdAt: new Date()
+        },
+        {
+          id: '19',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Fruits',
+          name: 'Papayas',
+          quantity: 30,
+          price: 50,
+          unit: 'kg',
+          description: 'Fresh ripe papayas',
+          createdAt: new Date()
+        },
+        {
+          id: '20',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Fruits',
+          name: 'Oranges',
+          quantity: 70,
+          price: 60,
+          unit: 'kg',
+          description: 'Juicy sweet oranges',
+          createdAt: new Date()
+        },
+        {
+          id: '21',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Fruits',
+          name: 'Lemons',
+          quantity: 40,
+          price: 80,
+          unit: 'kg',
+          description: 'Fresh tangy lemons',
+          createdAt: new Date()
+        },
+        // Berries
+        {
+          id: '22',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Berries',
+          name: 'Strawberries',
+          quantity: 20,
+          price: 200,
+          unit: 'kg',
+          description: 'Fresh sweet strawberries',
+          createdAt: new Date()
+        },
+        {
+          id: '23',
+          farmerId: '2',
+          type: 'fruit',
+          category: 'Berries',
+          name: 'Blueberries',
+          quantity: 15,
+          price: 300,
+          unit: 'kg',
+          description: 'Fresh antioxidant-rich blueberries',
           createdAt: new Date()
         }
       ]
@@ -153,9 +413,25 @@ class UserStore {
     return { success: true, message: 'Login successful', user };
   }
 
+  loginWithAadhar(aadharNumber: string, dateOfBirth: string): { success: boolean; message: string; user?: User } {
+    const user = this.users.find(u => u.aadharNumber === aadharNumber && u.dateOfBirth === dateOfBirth && u.verified);
+    
+    if (!user) {
+      return { success: false, message: 'Invalid Aadhar number or date of birth. Please check your details or sign up first.' };
+    }
+
+    this.currentUser = user;
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    return { success: true, message: 'Login successful', user };
+  }
+
   signup(userData: Partial<User>): { success: boolean; message: string } {
     if (this.users.find(u => u.email === userData.email)) {
       return { success: false, message: 'Email already exists' };
+    }
+
+    if (userData.aadharNumber && this.users.find(u => u.aadharNumber === userData.aadharNumber)) {
+      return { success: false, message: 'Aadhar number already registered' };
     }
 
     const newUser: User = {
@@ -164,7 +440,9 @@ class UserStore {
       name: userData.name!,
       type: userData.type!,
       verified: false,
-      phone: userData.phone
+      phone: userData.phone,
+      aadharNumber: userData.aadharNumber,
+      dateOfBirth: userData.dateOfBirth
     };
 
     this.users.push(newUser);

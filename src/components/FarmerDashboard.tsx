@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, Trash2, Package, IndianRupee } from "lucide-react";
+import { MapPin, Plus, Package } from "lucide-react";
 import { userStore, User, Product, Farm } from "@/store/userStore";
 import { languageStore } from "@/store/languageStore";
 import { getCurrentLocation, Location } from "@/utils/locationUtils";
@@ -29,14 +29,22 @@ const FarmerDashboard = ({ user }: { user: User }) => {
 
   const categories = {
     vegetable: [
-      languageStore.translate('category.leafy'),
-      languageStore.translate('category.root'), 
-      languageStore.translate('category.other')
+      'Leafy Greens',
+      'Root Vegetables', 
+      'Other Vegetables'
     ],
     fruit: [
-      languageStore.translate('category.fruits'),
-      languageStore.translate('category.berries')
+      'Fruits',
+      'Berries'
     ]
+  };
+
+  const productSuggestions = {
+    'Leafy Greens': ['Spinach', 'Kale', 'Lettuce', 'Cabbage', 'Collard Greens', 'Watercress'],
+    'Root Vegetables': ['Carrots', 'Potatoes', 'Sweet Potatoes', 'Radish', 'Beetroot', 'Turnips'],
+    'Other Vegetables': ['Broccoli', 'Cauliflower'],
+    'Fruits': ['Apples', 'Bananas', 'Grapes', 'Mangoes', 'Papayas', 'Oranges', 'Lemons'],
+    'Berries': ['Strawberries', 'Blueberries']
   };
 
   useEffect(() => {
@@ -52,7 +60,6 @@ const FarmerDashboard = ({ user }: { user: User }) => {
       const location = await getCurrentLocation();
       setFarmLocation(location);
       
-      // Update user location in store
       userStore.updateUserLocation(user.id, {
         lat: location.lat,
         lng: location.lng,
@@ -93,7 +100,6 @@ const FarmerDashboard = ({ user }: { user: User }) => {
       let currentFarm = farm;
       
       if (!currentFarm) {
-        // Create new farm
         const farmId = userStore.addFarm({
           farmerId: user.id,
           location: {
@@ -107,14 +113,12 @@ const FarmerDashboard = ({ user }: { user: User }) => {
         setFarm(currentFarm);
       }
 
-      // Add product to farm
       userStore.addProductToFarm(currentFarm.id, {
         ...newProduct,
         farmerId: user.id,
         createdAt: new Date()
       });
 
-      // Reset form
       setNewProduct({
         type: 'vegetable',
         category: '',
@@ -126,7 +130,6 @@ const FarmerDashboard = ({ user }: { user: User }) => {
       });
       setShowAddProduct(false);
 
-      // Refresh farm data
       const updatedFarm = userStore.getFarmByFarmerId(user.id);
       setFarm(updatedFarm!);
 
@@ -152,7 +155,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
             <span>Farm Location</span>
           </CardTitle>
           <CardDescription>
-            Set your farm location to help buyers find you
+            Set your farm location to help buyers find you and calculate distances
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,7 +183,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Package className="h-5 w-5" />
-              <span>My Products</span>
+              <span>My Products ({farm?.products.length || 0})</span>
             </div>
             <Button onClick={() => setShowAddProduct(true)} disabled={!farmLocation}>
               <Plus className="h-4 w-4 mr-2" />
@@ -190,7 +193,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
         </CardHeader>
         <CardContent>
           {farm?.products.length ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {farm.products.map((product) => (
                 <Card key={product.id} className="border-green-100">
                   <CardHeader className="pb-3">
@@ -227,11 +230,12 @@ const FarmerDashboard = ({ user }: { user: User }) => {
         </CardContent>
       </Card>
 
-      {/* Add Product Modal */}
+      {/* Add Product Form */}
       {showAddProduct && (
         <Card className="border-green-200">
           <CardHeader>
             <CardTitle>Add New Product</CardTitle>
+            <CardDescription>Fill in the details for your new product</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -240,7 +244,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                 <Select 
                   value={newProduct.type} 
                   onValueChange={(value: 'vegetable' | 'fruit') => {
-                    setNewProduct({ ...newProduct, type: value, category: '' });
+                    setNewProduct({ ...newProduct, type: value, category: '', name: '' });
                   }}
                 >
                   <SelectTrigger>
@@ -257,7 +261,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                 <label className="text-sm font-medium">Category</label>
                 <Select 
                   value={newProduct.category} 
-                  onValueChange={(value) => setNewProduct({ ...newProduct, category: value })}
+                  onValueChange={(value) => setNewProduct({ ...newProduct, category: value, name: '' })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -273,10 +277,24 @@ const FarmerDashboard = ({ user }: { user: User }) => {
 
             <div>
               <label className="text-sm font-medium">Product Name</label>
+              <Select 
+                value={newProduct.name} 
+                onValueChange={(value) => setNewProduct({ ...newProduct, name: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select or type product name" />
+                </SelectTrigger>
+                <SelectContent>
+                  {newProduct.category && productSuggestions[newProduct.category as keyof typeof productSuggestions]?.map((product) => (
+                    <SelectItem key={product} value={product}>{product}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
+                className="mt-2"
+                placeholder="Or type custom product name"
                 value={newProduct.name}
                 onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                placeholder="e.g., Fresh Spinach"
               />
             </div>
 
@@ -285,17 +303,21 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                 <label className="text-sm font-medium">Quantity</label>
                 <Input
                   type="number"
-                  value={newProduct.quantity}
+                  min="1"
+                  value={newProduct.quantity || ''}
                   onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 0 })}
+                  placeholder="e.g., 50"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-medium">Price</label>
+                <label className="text-sm font-medium">Price (₹)</label>
                 <Input
                   type="number"
-                  value={newProduct.price}
+                  min="1"
+                  value={newProduct.price || ''}
                   onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) || 0 })}
+                  placeholder="e.g., 30"
                 />
               </div>
               
@@ -313,6 +335,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                     <SelectItem value="bunch">bunch</SelectItem>
                     <SelectItem value="piece">piece</SelectItem>
                     <SelectItem value="dozen">dozen</SelectItem>
+                    <SelectItem value="box">box</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -323,17 +346,18 @@ const FarmerDashboard = ({ user }: { user: User }) => {
               <Textarea
                 value={newProduct.description}
                 onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                placeholder="Describe your product quality, freshness, etc."
+                placeholder="Describe your product quality, freshness, organic certification, etc."
+                rows={3}
               />
             </div>
 
             <div className="flex space-x-4">
               <Button onClick={handleAddProduct} className="bg-green-600 hover:bg-green-700">
                 <Plus className="h-4 w-4 mr-2" />
-                {languageStore.translate('common.add')}
+                Add Product
               </Button>
               <Button variant="outline" onClick={() => setShowAddProduct(false)}>
-                {languageStore.translate('common.cancel')}
+                Cancel
               </Button>
             </div>
           </CardContent>

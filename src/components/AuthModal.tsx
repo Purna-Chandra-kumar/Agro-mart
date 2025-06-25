@@ -28,11 +28,14 @@ const AuthModal = ({
   onSwitchUserType
 }: AuthModalProps) => {
   const { toast } = useToast();
+  const [authMethod, setAuthMethod] = useState<'email' | 'aadhar'>('email');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: '',
-    phone: ''
+    phone: '',
+    aadharNumber: '',
+    dateOfBirth: ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +45,13 @@ const AuthModal = ({
 
     try {
       if (mode === 'login') {
-        const result = userStore.login(formData.email, formData.password);
+        let result;
+        if (userType === 'farmer' && authMethod === 'aadhar') {
+          result = userStore.loginWithAadhar(formData.aadharNumber, formData.dateOfBirth);
+        } else {
+          result = userStore.login(formData.email, formData.password);
+        }
+        
         if (result.success) {
           toast({
             title: "Login successful!",
@@ -58,15 +67,20 @@ const AuthModal = ({
           });
         }
       } else {
-        const result = userStore.signup({
+        const userData = {
           email: formData.email,
           name: formData.name,
           type: userType,
-          phone: formData.phone
-        });
+          phone: formData.phone,
+          ...(userType === 'farmer' && authMethod === 'aadhar' && {
+            aadharNumber: formData.aadharNumber,
+            dateOfBirth: formData.dateOfBirth
+          })
+        };
+        
+        const result = userStore.signup(userData);
         
         if (result.success) {
-          // Auto-verify for demo purposes
           userStore.verifyEmail(formData.email);
           
           toast({
@@ -99,8 +113,11 @@ const AuthModal = ({
       email: '',
       password: '',
       name: '',
-      phone: ''
+      phone: '',
+      aadharNumber: '',
+      dateOfBirth: ''
     });
+    setAuthMethod('email');
   };
 
   return (
@@ -125,62 +142,157 @@ const AuthModal = ({
           </TabsList>
 
           <TabsContent value={userType} className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'signup' && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                    />
-                  </div>
-                </>
-              )}
+            {userType === 'farmer' && mode === 'login' && (
+              <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'aadhar')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="email">Email</TabsTrigger>
+                  <TabsTrigger value="aadhar">Aadhar</TabsTrigger>
+                </TabsList>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
+                <TabsContent value={authMethod}>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {authMethod === 'email' ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="Enter your email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder="Enter your password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="aadhar">Aadhar Number</Label>
+                          <Input
+                            id="aadhar"
+                            type="text"
+                            placeholder="Enter your 12-digit Aadhar number"
+                            value={formData.aadharNumber}
+                            onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                            maxLength={12}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dob">Date of Birth</Label>
+                          <Input
+                            id="dob"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
+                    
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? 'Processing...' : 'Sign In'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                />
-              </div>
+            {(userType === 'buyer' || mode === 'signup') && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === 'signup' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="Enter your phone number"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                      />
+                    </div>
+                    {userType === 'farmer' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="aadhar-signup">Aadhar Number (Optional)</Label>
+                          <Input
+                            id="aadhar-signup"
+                            type="text"
+                            placeholder="Enter your 12-digit Aadhar number"
+                            value={formData.aadharNumber}
+                            onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                            maxLength={12}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dob-signup">Date of Birth (Optional)</Label>
+                          <Input
+                            id="dob-signup"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-              </Button>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                </Button>
+              </form>
+            )}
 
             <div className="text-center">
               <Button 
