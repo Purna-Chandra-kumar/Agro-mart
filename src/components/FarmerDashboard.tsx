@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,14 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, Package } from "lucide-react";
+import { MapPin, Plus, Package, Upload, X } from "lucide-react";
 import { userStore, User, Product, Farm } from "@/store/userStore";
-import { languageStore } from "@/store/languageStore";
 import { getCurrentLocation, Location } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
+import FarmerProfileForm from "./FarmerProfileForm";
 
 const FarmerDashboard = ({ user }: { user: User }) => {
   const { toast } = useToast();
+  const [showProfileForm, setShowProfileForm] = useState(false);
   const [farm, setFarm] = useState<Farm | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -23,9 +23,20 @@ const FarmerDashboard = ({ user }: { user: User }) => {
     quantity: 0,
     price: 0,
     unit: 'kg',
-    description: ''
+    description: '',
+    contactInfo: '',
+    additionalInfo: '',
+    image: null as File | null
   });
   const [farmLocation, setFarmLocation] = useState<Location | null>(null);
+
+  // Check if profile is completed
+  useEffect(() => {
+    const currentUser = userStore.getCurrentUser();
+    if (currentUser && !currentUser.profileCompleted) {
+      setShowProfileForm(true);
+    }
+  }, []);
 
   const categories = {
     vegetable: [
@@ -55,6 +66,15 @@ const FarmerDashboard = ({ user }: { user: User }) => {
     }
   }, [user.id]);
 
+  const handleProfileComplete = () => {
+    setShowProfileForm(false);
+    // Refresh user data
+    const updatedUser = userStore.getCurrentUser();
+    if (updatedUser) {
+      // User profile is now complete, continue with farm setup
+    }
+  };
+
   const handleGetLocation = async () => {
     try {
       const location = await getCurrentLocation();
@@ -79,6 +99,13 @@ const FarmerDashboard = ({ user }: { user: User }) => {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewProduct({ ...newProduct, image: file });
+    }
+  };
+
   const handleAddProduct = () => {
     if (!farmLocation) {
       toast({
@@ -88,9 +115,10 @@ const FarmerDashboard = ({ user }: { user: User }) => {
       return;
     }
 
-    if (!newProduct.name || !newProduct.category || newProduct.quantity <= 0 || newProduct.price <= 0) {
+    if (!newProduct.name || !newProduct.category || newProduct.quantity <= 0) {
       toast({
         title: "Please fill all required fields",
+        description: "Name, category, and quantity are required",
         variant: "destructive"
       });
       return;
@@ -126,7 +154,10 @@ const FarmerDashboard = ({ user }: { user: User }) => {
         quantity: 0,
         price: 0,
         unit: 'kg',
-        description: ''
+        description: '',
+        contactInfo: '',
+        additionalInfo: '',
+        image: null
       });
       setShowAddProduct(false);
 
@@ -144,6 +175,11 @@ const FarmerDashboard = ({ user }: { user: User }) => {
       });
     }
   };
+
+  // Show profile form if not completed
+  if (showProfileForm) {
+    return <FarmerProfileForm user={user} onProfileComplete={handleProfileComplete} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -205,17 +241,25 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                         </Badge>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">
-                          ₹{product.price}/{product.unit}
-                        </div>
+                        {product.price > 0 && (
+                          <div className="text-lg font-bold text-green-600">
+                            ₹{product.price}/{product.unit}
+                          </div>
+                        )}
                         <div className="text-sm text-gray-500">
                           {product.quantity} {product.unit} available
                         </div>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
+                  <CardContent className="pt-0 space-y-2">
                     <p className="text-sm text-gray-600">{product.description}</p>
+                    {product.contactInfo && (
+                      <p className="text-sm font-medium">Contact: {product.contactInfo}</p>
+                    )}
+                    {product.additionalInfo && (
+                      <p className="text-sm text-gray-500">{product.additionalInfo}</p>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -276,7 +320,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Product Name</label>
+              <label className="text-sm font-medium">Product Name *</label>
               <Select 
                 value={newProduct.name} 
                 onValueChange={(value) => setNewProduct({ ...newProduct, name: value })}
@@ -300,7 +344,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium">Quantity</label>
+                <label className="text-sm font-medium">Quantity *</label>
                 <Input
                   type="number"
                   min="1"
@@ -314,7 +358,7 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                 <label className="text-sm font-medium">Price (₹)</label>
                 <Input
                   type="number"
-                  min="1"
+                  min="0"
                   value={newProduct.price || ''}
                   onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) || 0 })}
                   placeholder="e.g., 30"
@@ -349,6 +393,52 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                 placeholder="Describe your product quality, freshness, organic certification, etc."
                 rows={3}
               />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Contact Details for Selling</label>
+              <Input
+                value={newProduct.contactInfo}
+                onChange={(e) => setNewProduct({ ...newProduct, contactInfo: e.target.value })}
+                placeholder="Phone number, WhatsApp, or preferred contact method"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Additional Information</label>
+              <Textarea
+                value={newProduct.additionalInfo}
+                onChange={(e) => setNewProduct({ ...newProduct, additionalInfo: e.target.value })}
+                placeholder="Any additional details about the product"
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Product Image</label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="flex-1"
+                />
+                {newProduct.image && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNewProduct({ ...newProduct, image: null })}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {newProduct.image && (
+                <p className="text-sm text-green-600 mt-1">
+                  ✓ Image selected: {newProduct.image.name}
+                </p>
+              )}
             </div>
 
             <div className="flex space-x-4">

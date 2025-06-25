@@ -7,6 +7,8 @@ interface User {
   phone?: string;
   aadharNumber?: string;
   dateOfBirth?: string;
+  whatsappNumber?: string;
+  profileCompleted?: boolean;
   location?: {
     lat: number;
     lng: number;
@@ -24,6 +26,8 @@ interface Product {
   price: number;
   unit: string;
   description: string;
+  contactInfo?: string;
+  additionalInfo?: string;
   image?: string;
   createdAt: Date;
 }
@@ -60,7 +64,8 @@ class UserStore {
       name: 'Test Buyer',
       type: 'buyer',
       verified: true,
-      phone: '+91 9876543210'
+      phone: '+91 9876543210',
+      profileCompleted: true
     },
     {
       id: '2', 
@@ -71,6 +76,7 @@ class UserStore {
       phone: '+91 9876543211',
       aadharNumber: '123456789012',
       dateOfBirth: '1985-06-15',
+      profileCompleted: true,
       location: {
         lat: 28.6139,
         lng: 77.2090,
@@ -100,6 +106,7 @@ class UserStore {
           price: 30,
           unit: 'kg',
           description: 'Fresh organic spinach leaves',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -112,6 +119,7 @@ class UserStore {
           price: 45,
           unit: 'kg',
           description: 'Nutrient-rich kale leaves',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -124,6 +132,7 @@ class UserStore {
           price: 35,
           unit: 'kg',
           description: 'Fresh crispy lettuce',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -136,6 +145,7 @@ class UserStore {
           price: 25,
           unit: 'kg',
           description: 'Fresh green cabbage heads',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -148,6 +158,7 @@ class UserStore {
           price: 40,
           unit: 'kg',
           description: 'Fresh collard green leaves',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -160,6 +171,7 @@ class UserStore {
           price: 60,
           unit: 'kg',
           description: 'Fresh watercress with peppery flavor',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         // Root Vegetables
@@ -173,6 +185,7 @@ class UserStore {
           price: 40,
           unit: 'kg',
           description: 'Fresh orange carrots',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -185,6 +198,7 @@ class UserStore {
           price: 20,
           unit: 'kg',
           description: 'Fresh farm potatoes',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -197,6 +211,7 @@ class UserStore {
           price: 35,
           unit: 'kg',
           description: 'Sweet and nutritious sweet potatoes',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -209,6 +224,7 @@ class UserStore {
           price: 30,
           unit: 'kg',
           description: 'Fresh white radish',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -221,6 +237,7 @@ class UserStore {
           price: 45,
           unit: 'kg',
           description: 'Fresh red beetroot',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -233,6 +250,7 @@ class UserStore {
           price: 35,
           unit: 'kg',
           description: 'Fresh white turnips',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         // Other Vegetables
@@ -246,6 +264,7 @@ class UserStore {
           price: 60,
           unit: 'kg',
           description: 'Fresh green broccoli heads',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -258,6 +277,7 @@ class UserStore {
           price: 50,
           unit: 'kg',
           description: 'Fresh white cauliflower heads',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         // Fruits
@@ -271,6 +291,7 @@ class UserStore {
           price: 120,
           unit: 'kg',
           description: 'Fresh red apples',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -283,6 +304,7 @@ class UserStore {
           price: 40,
           unit: 'kg',
           description: 'Ripe yellow bananas',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -295,6 +317,7 @@ class UserStore {
           price: 80,
           unit: 'kg',
           description: 'Sweet green grapes',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -307,6 +330,7 @@ class UserStore {
           price: 100,
           unit: 'kg',
           description: 'Sweet Alphonso mangoes',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -319,6 +343,7 @@ class UserStore {
           price: 50,
           unit: 'kg',
           description: 'Fresh ripe papayas',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -331,6 +356,7 @@ class UserStore {
           price: 60,
           unit: 'kg',
           description: 'Juicy sweet oranges',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -343,6 +369,7 @@ class UserStore {
           price: 80,
           unit: 'kg',
           description: 'Fresh tangy lemons',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         // Berries
@@ -356,6 +383,7 @@ class UserStore {
           price: 200,
           unit: 'kg',
           description: 'Fresh sweet strawberries',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         },
         {
@@ -368,6 +396,7 @@ class UserStore {
           price: 300,
           unit: 'kg',
           description: 'Fresh antioxidant-rich blueberries',
+          contactInfo: '+91 9876543211',
           createdAt: new Date()
         }
       ]
@@ -442,7 +471,8 @@ class UserStore {
       verified: false,
       phone: userData.phone,
       aadharNumber: userData.aadharNumber,
-      dateOfBirth: userData.dateOfBirth
+      dateOfBirth: userData.dateOfBirth,
+      profileCompleted: userData.type === 'buyer' ? true : false
     };
 
     this.users.push(newUser);
@@ -453,6 +483,19 @@ class UserStore {
     const user = this.users.find(u => u.email === email);
     if (user) {
       user.verified = true;
+      return true;
+    }
+    return false;
+  }
+
+  updateUserProfile(userId: string, profileData: Partial<User>): boolean {
+    const user = this.users.find(u => u.id === userId);
+    if (user) {
+      Object.assign(user, profileData);
+      if (this.currentUser?.id === userId) {
+        this.currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+      }
       return true;
     }
     return false;
