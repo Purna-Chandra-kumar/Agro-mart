@@ -14,8 +14,6 @@ Fresh Farm Find is a digital platform that empowers local farmers to sell their 
 - **Multi-language Support**: Available in multiple languages for better accessibility
 - **Mobile-First Design**: Optimized for all devices
 
-## 🚀 Getting Started
-
 ### Prerequisites
 
 Make sure you have Node.js installed on your machine. We recommend using [nvm](https://github.com/nvm-sh/nvm) for Node.js version management.
