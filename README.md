@@ -81,7 +81,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🌱 Our Mission
 
 Supporting local agriculture and sustainable farming practices while making fresh, healthy food accessible to everyone in our community.
-
----
-
-Built with ❤️ for farmers and food lovers everywhere.
