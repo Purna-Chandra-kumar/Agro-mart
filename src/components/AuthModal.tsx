@@ -34,6 +34,7 @@ const AuthModal = ({
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     name: '',
     phone: '',
     aadharNumber: '',
@@ -48,6 +49,19 @@ const AuthModal = ({
     setIsLoading(true);
 
     try {
+      // Password confirmation validation for signup
+      if (mode === 'signup' && (userType === 'buyer' || authMethod === 'email')) {
+        if (formData.password !== formData.confirmPassword) {
+          toast({
+            title: "Passwords do not match",
+            description: "Please make sure both password fields match.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
       if (mode === 'login') {
         let result;
         if (userType === 'farmer' && authMethod === 'aadhar') {
@@ -116,6 +130,7 @@ const AuthModal = ({
     setFormData({
       email: '',
       password: '',
+      confirmPassword: '',
       name: '',
       phone: '',
       aadharNumber: '',
@@ -237,6 +252,20 @@ const AuthModal = ({
                       required
                     />
                   </div>
+                  {/* Confirm Password field for signup */}
+                  {mode === 'signup' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Confirm your password"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        required
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
