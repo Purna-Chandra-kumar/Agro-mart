@@ -1,15 +1,10 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Star, Leaf, Users, ShoppingCart } from "lucide-react";
-import AuthModal from "@/components/AuthModal";
 
 const Index = () => {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [userType, setUserType] = useState<'buyer' | 'farmer'>('buyer');
   const navigate = useNavigate();
 
   const featuredProducts = [
@@ -45,15 +40,8 @@ const Index = () => {
     }
   ];
 
-  const handleAuthClick = (mode: 'login' | 'signup', type: 'buyer' | 'farmer') => {
-    setAuthMode(mode);
-    setUserType(type);
-    setShowAuthModal(true);
-  };
-
-  const handleAuthSuccess = () => {
-    setShowAuthModal(false);
-    navigate('/dashboard');
+  const handleAuthClick = () => {
+    navigate('/auth');
   };
 
   return (
@@ -68,13 +56,13 @@ const Index = () => {
           <div className="space-x-4">
             <Button 
               variant="outline" 
-              onClick={() => handleAuthClick('login', 'buyer')}
+              onClick={handleAuthClick}
               className="border-green-200 hover:bg-green-50"
             >
               Login
             </Button>
             <Button 
-              onClick={() => handleAuthClick('signup', 'buyer')}
+              onClick={handleAuthClick}
               className="bg-green-600 hover:bg-green-700"
             >
               Get Started
@@ -96,7 +84,7 @@ const Index = () => {
           <div className="space-x-4 animate-slide-in">
             <Button 
               size="lg" 
-              onClick={() => handleAuthClick('signup', 'buyer')}
+              onClick={handleAuthClick}
               className="bg-white text-green-600 hover:bg-green-50 px-8 py-3"
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
@@ -105,7 +93,7 @@ const Index = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              onClick={() => handleAuthClick('signup', 'farmer')}
+              onClick={handleAuthClick}
               className="border-white text-white hover:bg-white hover:text-green-600 px-8 py-3"
             >
               <Users className="mr-2 h-5 w-5" />
@@ -211,7 +199,7 @@ const Index = () => {
                     </div>
                     <Button 
                       size="sm" 
-                      onClick={() => handleAuthClick('login', 'buyer')}
+                      onClick={handleAuthClick}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       View Details
@@ -235,7 +223,7 @@ const Index = () => {
           </p>
           <Button 
             size="lg" 
-            onClick={() => handleAuthClick('signup', 'buyer')}
+            onClick={handleAuthClick}
             className="bg-white text-green-600 hover:bg-green-50 px-8 py-3"
           >
             Start Shopping Now
@@ -256,15 +244,6 @@ const Index = () => {
         </div>
       </footer>
 
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        userType={userType}
-        onSuccess={handleAuthSuccess}
-        onSwitchMode={(newMode) => setAuthMode(newMode)}
-        onSwitchUserType={(newType) => setUserType(newType)}
-      />
     </div>
   );
 };
