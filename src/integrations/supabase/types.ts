@@ -14,7 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      delivery_partners: {
+        Row: {
+          available: boolean | null
+          created_at: string
+          id: string
+          location: Json | null
+          name: string
+          phone: string
+          price_per_km: number
+          rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean | null
+          created_at?: string
+          id?: string
+          location?: Json | null
+          name: string
+          phone: string
+          price_per_km: number
+          rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean | null
+          created_at?: string
+          id?: string
+          location?: Json | null
+          name?: string
+          phone?: string
+          price_per_km?: number
+          rating?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      farms: {
+        Row: {
+          created_at: string
+          farmer_id: string
+          id: string
+          location: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          farmer_id: string
+          id?: string
+          location?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          farmer_id?: string
+          id?: string
+          location?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farms_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          additional_info: string | null
+          category: string
+          contact_info: string | null
+          created_at: string
+          description: string | null
+          farm_id: string
+          farmer_id: string
+          id: string
+          image: string | null
+          name: string
+          price: number
+          quantity: number
+          type: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          additional_info?: string | null
+          category: string
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          farm_id: string
+          farmer_id: string
+          id?: string
+          image?: string | null
+          name: string
+          price: number
+          quantity: number
+          type: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          additional_info?: string | null
+          category?: string
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          farm_id?: string
+          farmer_id?: string
+          id?: string
+          image?: string | null
+          name?: string
+          price?: number
+          quantity?: number
+          type?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "farms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          aadhar_number: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          location: Json | null
+          name: string | null
+          phone: string | null
+          profile_completed: boolean | null
+          updated_at: string
+          user_id: string
+          user_type: string
+          verified: boolean | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          aadhar_number?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          location?: Json | null
+          name?: string | null
+          phone?: string | null
+          profile_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+          user_type: string
+          verified?: boolean | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          aadhar_number?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          location?: Json | null
+          name?: string | null
+          phone?: string | null
+          profile_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+          verified?: boolean | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
