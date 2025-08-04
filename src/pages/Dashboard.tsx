@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Leaf, Bell, ShoppingCart, User, LogOut } from "lucide-react";
-import { userStore, User as UserType } from "@/store/userStore";
+import { supabaseUserStore, Profile } from "@/store/supabaseUserStore";
+import { supabase } from "@/integrations/supabase/client";
 import { languageStore } from "@/store/languageStore";
 import LanguageSelector from "@/components/LanguageSelector";
 import BuyerDashboard from "@/components/BuyerDashboard";
@@ -11,19 +12,27 @@ import FarmerDashboard from "@/components/FarmerDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<UserType | null>(null);
+  const [user, setUser] = useState<Profile | null>(null);
 
   useEffect(() => {
-    const currentUser = userStore.getCurrentUser();
-    if (!currentUser) {
-      navigate('/');
-      return;
-    }
-    setUser(currentUser);
+    const checkUser = async () => {
+      const currentUser = supabaseUserStore.getCurrentUser();
+      if (!currentUser) {
+        navigate('/auth');
+        return;
+      }
+      
+      const profile = await supabaseUserStore.getProfile(currentUser.id);
+      if (profile) {
+        setUser(profile);
+      }
+    };
+    
+    checkUser();
   }, [navigate]);
 
-  const handleLogout = () => {
-    userStore.logout();
+  const handleLogout = async () => {
+    await supabaseUserStore.signOut();
     navigate('/');
   };
 
@@ -50,7 +59,7 @@ const Dashboard = () => {
               <Button variant="ghost" size="sm">
                 <Bell className="h-5 w-5" />
               </Button>
-              {user.type === 'buyer' && (
+              {user.user_type === 'buyer' && (
                 <Button variant="ghost" size="sm">
                   <ShoppingCart className="h-5 w-5" />
                 </Button>
@@ -78,7 +87,7 @@ const Dashboard = () => {
             Welcome, {user.name}!
           </h1>
           <p className="text-gray-600">
-            {user.type === 'buyer' 
+            {user.user_type === 'buyer' 
               ? 'Discover fresh vegetables and fruits directly from farmers'
               : 'Manage your farm and products'
             }
@@ -86,7 +95,7 @@ const Dashboard = () => {
         </div>
 
         {/* Dashboard Content */}
-        {user.type === 'buyer' ? (
+        {user.user_type === 'buyer' ? (
           <BuyerDashboard user={user} />
         ) : (
           <FarmerDashboard user={user} />

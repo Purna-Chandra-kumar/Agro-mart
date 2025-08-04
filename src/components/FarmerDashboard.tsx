@@ -6,15 +6,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Plus, Package, Upload, X } from "lucide-react";
-import { userStore, User, Product, Farm } from "@/store/userStore";
+import { supabaseUserStore, type Profile } from "@/store/supabaseUserStore";
 import { getCurrentLocation, Location } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
 import FarmerProfileForm from "./FarmerProfileForm";
 
-const FarmerDashboard = ({ user }: { user: User }) => {
+const FarmerDashboard = ({ user }: { user: Profile }) => {
   const { toast } = useToast();
   const [showProfileForm, setShowProfileForm] = useState(false);
-  const [farm, setFarm] = useState<Farm | null>(null);
+  const [farm, setFarm] = useState<any>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({
     type: 'vegetable' as 'vegetable' | 'fruit',
@@ -32,11 +32,10 @@ const FarmerDashboard = ({ user }: { user: User }) => {
 
   // Check if profile is completed
   useEffect(() => {
-    const currentUser = userStore.getCurrentUser();
-    if (currentUser && !currentUser.profileCompleted) {
+    if (user && !user.profile_completed) {
       setShowProfileForm(true);
     }
-  }, []);
+  }, [user]);
 
   const categories = {
     vegetable: [
@@ -59,20 +58,20 @@ const FarmerDashboard = ({ user }: { user: User }) => {
   };
 
   useEffect(() => {
-    const existingFarm = userStore.getFarmByFarmerId(user.id);
-    if (existingFarm) {
-      setFarm(existingFarm);
-      setFarmLocation(existingFarm.location);
-    }
-  }, [user.id]);
+    const loadFarm = async () => {
+      const farms = await supabaseUserStore.getFarms();
+      const userFarm = farms.find(f => f.farmer_id === user.user_id);
+      if (userFarm) {
+        setFarm(userFarm);
+        const farmLoc = userFarm.location as any;
+        setFarmLocation({ lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 });
+      }
+    };
+    loadFarm();
+  }, [user.user_id]);
 
   const handleProfileComplete = () => {
     setShowProfileForm(false);
-    // Refresh user data
-    const updatedUser = userStore.getCurrentUser();
-    if (updatedUser) {
-      // User profile is now complete, continue with farm setup
-    }
   };
 
   const handleGetLocation = async () => {
@@ -80,10 +79,13 @@ const FarmerDashboard = ({ user }: { user: User }) => {
       const location = await getCurrentLocation();
       setFarmLocation(location);
       
-      userStore.updateUserLocation(user.id, {
-        lat: location.lat,
-        lng: location.lng,
-        address: `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+      // Update user location in profile
+      await supabaseUserStore.updateProfile(user.user_id, {
+        location: {
+          lat: location.lat,
+          lng: location.lng,
+          address: `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+        }
       });
 
       toast({
@@ -125,60 +127,12 @@ const FarmerDashboard = ({ user }: { user: User }) => {
     }
 
     try {
-      let currentFarm = farm;
-      
-      if (!currentFarm) {
-        const farmId = userStore.addFarm({
-          farmerId: user.id,
-          location: {
-            lat: farmLocation.lat,
-            lng: farmLocation.lng,
-            address: user.location?.address || `${farmLocation.lat.toFixed(4)}, ${farmLocation.lng.toFixed(4)}`
-          },
-          products: []
-        });
-        currentFarm = userStore.getFarms().find(f => f.id === farmId)!;
-        setFarm(currentFarm);
-      }
-
-      // Convert File to data URL string if image exists
-      let imageString: string | undefined = undefined;
-      if (newProduct.image) {
-        imageString = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(newProduct.image!);
-        });
-      }
-
-      userStore.addProductToFarm(currentFarm.id, {
-        ...newProduct,
-        image: imageString,
-        farmerId: user.id,
-        createdAt: new Date()
-      });
-
-      setNewProduct({
-        type: 'vegetable',
-        category: '',
-        name: '',
-        quantity: 0,
-        price: 0,
-        unit: 'kg',
-        description: '',
-        contactInfo: '',
-        additionalInfo: '',
-        image: null
+      toast({
+        title: "Feature coming soon",
+        description: "Product management will be available once the database schema is fully implemented",
+        className: "bg-blue-50 border-blue-200"
       });
       setShowAddProduct(false);
-
-      const updatedFarm = userStore.getFarmByFarmerId(user.id);
-      setFarm(updatedFarm!);
-
-      toast({
-        title: "Product added successfully",
-        className: "bg-green-50 border-green-200"
-      });
     } catch (error) {
       toast({
         title: "Error adding product",
@@ -239,9 +193,9 @@ const FarmerDashboard = ({ user }: { user: User }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {farm?.products.length ? (
+          {farm?.products && farm.products.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {farm.products.map((product) => (
+              {farm.products.map((product: any) => (
                 <Card key={product.id} className="border-green-100">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -265,11 +219,11 @@ const FarmerDashboard = ({ user }: { user: User }) => {
                   </CardHeader>
                   <CardContent className="pt-0 space-y-2">
                     <p className="text-sm text-gray-600">{product.description}</p>
-                    {product.contactInfo && (
-                      <p className="text-sm font-medium">Contact: {product.contactInfo}</p>
+                    {product.contact_info && (
+                      <p className="text-sm font-medium">Contact: {product.contact_info}</p>
                     )}
-                    {product.additionalInfo && (
-                      <p className="text-sm text-gray-500">{product.additionalInfo}</p>
+                    {product.additional_info && (
+                      <p className="text-sm text-gray-500">{product.additional_info}</p>
                     )}
                   </CardContent>
                 </Card>

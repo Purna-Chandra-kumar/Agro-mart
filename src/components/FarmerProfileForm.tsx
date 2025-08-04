@@ -1,15 +1,14 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { userStore, User } from "@/store/userStore";
+import { supabaseUserStore, Profile } from "@/store/supabaseUserStore";
 import { languageStore } from "@/store/languageStore";
 
 interface FarmerProfileFormProps {
-  user: User;
+  user: Profile;
   onProfileComplete: () => void;
 }
 
@@ -18,8 +17,7 @@ const FarmerProfileForm = ({ user, onProfileComplete }: FarmerProfileFormProps) 
   const [formData, setFormData] = useState({
     name: user.name || '',
     phone: user.phone || '',
-    email: user.email || '',
-    whatsappNumber: user.whatsappNumber || ''
+    whatsappNumber: user.whatsapp_number || ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,9 +28,11 @@ const FarmerProfileForm = ({ user, onProfileComplete }: FarmerProfileFormProps) 
     setIsLoading(true);
 
     try {
-      const success = userStore.updateUserProfile(user.id, {
-        ...formData,
-        profileCompleted: true
+      const success = await supabaseUserStore.updateProfile(user.user_id, {
+        name: formData.name,
+        phone: formData.phone,
+        whatsapp_number: formData.whatsappNumber,
+        profile_completed: true
       });
 
       if (success) {
@@ -92,17 +92,6 @@ const FarmerProfileForm = ({ user, onProfileComplete }: FarmerProfileFormProps) 
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('profile.email_optional')}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder={t('auth.enter_email')}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
 

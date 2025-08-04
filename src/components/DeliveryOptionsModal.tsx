@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Truck, User, Phone, Star, MapPin, IndianRupee } from "lucide-react";
-import { userStore, DeliveryPartner } from "@/store/userStore";
+import { supabaseUserStore } from "@/store/supabaseUserStore";
+
+interface DeliveryPartner {
+  id: string;
+  name: string;
+  phone: string;
+  location: any;
+  rating: number;
+  price_per_km: number;
+  available: boolean;
+}
 import { languageStore } from "@/store/languageStore";
 
 interface ProductWithDistance {
@@ -41,7 +51,15 @@ const DeliveryOptionsModal = ({
   const [selectedDeliveryPartner, setSelectedDeliveryPartner] = useState<DeliveryPartner | null>(null);
   const [orderQuantity, setOrderQuantity] = useState(1);
   
-  const deliveryPartners = userStore.getDeliveryPartners();
+  const [deliveryPartners, setDeliveryPartners] = useState<DeliveryPartner[]>([]);
+  
+  useEffect(() => {
+    const loadPartners = async () => {
+      const partners = await supabaseUserStore.getDeliveryPartners();
+      setDeliveryPartners(partners);
+    };
+    loadPartners();
+  }, []);
 
   const handleDirectBuy = () => {
     onDirectBuy(product);
@@ -55,7 +73,7 @@ const DeliveryOptionsModal = ({
   };
 
   const calculateDeliveryFee = (partner: DeliveryPartner) => {
-    return Math.round(product.distance * partner.pricePerKm);
+    return Math.round(product.distance * partner.price_per_km);
   };
 
   const calculateTotal = () => {

@@ -6,11 +6,39 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Phone, Search, Filter, Truck, User as UserIcon, ShoppingCart, Star } from "lucide-react";
-import { userStore, type User, type Farm, type Product, type DeliveryPartner } from "@/store/userStore";
+import { supabaseUserStore, type Profile } from "@/store/supabaseUserStore";
 import { languageStore } from "@/store/languageStore";
 import { getCurrentLocation, calculateDistance, formatDistance, type Location } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
 import DeliveryOptionsModal from "./DeliveryOptionsModal";
+
+interface Product {
+  id: string;
+  farm_id: string;
+  farmer_id: string;
+  type: string;
+  category: string;
+  name: string;
+  quantity: number;
+  price: number;
+  unit: string;
+  description: string | null;
+  contact_info: string | null;
+  additional_info: string | null;
+  image: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DeliveryPartner {
+  id: string;
+  name: string;
+  phone: string;
+  location: any;
+  rating: number;
+  price_per_km: number;
+  available: boolean;
+}
 
 interface ProductWithDistance extends Product {
   distance: number;
@@ -19,7 +47,7 @@ interface ProductWithDistance extends Product {
   farmLocation: Location;
 }
 
-const BuyerDashboard = ({ user }: { user: User }) => {
+const BuyerDashboard = ({ user }: { user: Profile }) => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -48,22 +76,24 @@ const BuyerDashboard = ({ user }: { user: User }) => {
       const location = await getCurrentLocation();
       setUserLocation(location);
       
-      // Get all farms and calculate distances
-      const farms = userStore.getFarms();
+      // Get all products from Supabase
+      const products = await supabaseUserStore.getProducts();
+      const farms = await supabaseUserStore.getFarms();
       const allProducts: ProductWithDistance[] = [];
 
-      farms.forEach(farm => {
-        const farmer = userStore.getCurrentUser(); // In real app, get farmer by farm.farmerId
-        farm.products.forEach(product => {
-          const distance = calculateDistance(location, farm.location);
+      products.forEach(product => {
+        const farm = farms.find(f => f.id === product.farm_id);
+        if (farm) {
+          const farmLoc = farm.location as any;
+          const distance = calculateDistance(location, { lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 });
           allProducts.push({
             ...product,
             distance,
-            farmerName: farmer?.name || 'Unknown Farmer',
-            farmerPhone: farmer?.phone || '',
-            farmLocation: farm.location
+            farmerName: 'Farmer', // Will be populated from profiles
+            farmerPhone: product.contact_info || '',
+            farmLocation: { lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 }
           });
-        });
+        }
       });
 
       // Sort by distance
@@ -78,20 +108,22 @@ const BuyerDashboard = ({ user }: { user: User }) => {
       });
       
       // Fallback without location
-      const farms = userStore.getFarms();
+      const products = await supabaseUserStore.getProducts();
+      const farms = await supabaseUserStore.getFarms();
       const allProducts: ProductWithDistance[] = [];
       
-      farms.forEach(farm => {
-        const farmer = userStore.getCurrentUser();
-        farm.products.forEach(product => {
+      products.forEach(product => {
+        const farm = farms.find(f => f.id === product.farm_id);
+        if (farm) {
+          const farmLoc = farm.location as any;
           allProducts.push({
             ...product,
             distance: 0,
-            farmerName: farmer?.name || 'Unknown Farmer',
-            farmerPhone: farmer?.phone || '',
-            farmLocation: farm.location
+            farmerName: 'Farmer',
+            farmerPhone: product.contact_info || '',
+            farmLocation: { lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 }
           });
-        });
+        }
       });
       
       setProducts(allProducts);
@@ -128,7 +160,7 @@ const BuyerDashboard = ({ user }: { user: User }) => {
 
   const handleDeliveryOrder = (product: ProductWithDistance, deliveryPartner: DeliveryPartner, quantity: number) => {
     const productTotal = product.price * quantity;
-    const deliveryFee = Math.round(product.distance * deliveryPartner.pricePerKm);
+    const deliveryFee = Math.round(product.distance * deliveryPartner.price_per_km);
     const total = productTotal + deliveryFee;
     
     toast({
