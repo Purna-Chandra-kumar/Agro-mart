@@ -36,7 +36,7 @@ interface DeliveryOptionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: ProductWithDistance;
-  onDirectBuy: (product: ProductWithDistance) => void;
+  onDirectBuy: (product: ProductWithDistance, quantity: number) => void;
   onDeliveryOrder: (product: ProductWithDistance, deliveryPartner: DeliveryPartner, quantity: number) => void;
 }
 
@@ -62,7 +62,7 @@ const DeliveryOptionsModal = ({
   }, []);
 
   const handleDirectBuy = () => {
-    onDirectBuy(product);
+    onDirectBuy(product, orderQuantity);
     onClose();
   };
 

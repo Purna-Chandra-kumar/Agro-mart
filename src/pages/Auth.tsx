@@ -20,6 +20,7 @@ export default function Auth() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     name: '',
     phone: '',
     aadharNumber: '',
@@ -41,6 +42,17 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Password confirmation validation for signup
+    if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       if (mode === 'login') {
@@ -99,6 +111,7 @@ export default function Auth() {
     setFormData({
       email: '',
       password: '',
+      confirmPassword: '',
       name: '',
       phone: '',
       aadharNumber: '',
@@ -134,15 +147,15 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value={userType} className="space-y-4">
-              {userType === 'farmer' && mode === 'login' && (
+                {userType === 'farmer' && (
                 <ToggleGroup
                   type="single"
                   value={authMethod}
                   onValueChange={(value) => value && setAuthMethod(value as 'email' | 'aadhar')}
                   className="justify-center"
                 >
-                  <ToggleGroupItem value="email">Email</ToggleGroupItem>
-                  <ToggleGroupItem value="aadhar">Aadhar</ToggleGroupItem>
+                  <ToggleGroupItem value="email">Email & Password</ToggleGroupItem>
+                  <ToggleGroupItem value="aadhar">Aadhar & Date of Birth</ToggleGroupItem>
                 </ToggleGroup>
               )}
 
@@ -182,6 +195,18 @@ export default function Auth() {
                         required
                       />
                     </div>
+                    {mode === 'signup' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={formData.confirmPassword}
+                          onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    )}
                   </>
                 )}
 

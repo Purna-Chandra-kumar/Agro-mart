@@ -10,7 +10,9 @@ import { supabaseUserStore, type Profile } from "@/store/supabaseUserStore";
 import { languageStore } from "@/store/languageStore";
 import { getCurrentLocation, calculateDistance, formatDistance, type Location } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
+import { staticProducts, type ProductData } from "@/data/productsData";
 import DeliveryOptionsModal from "./DeliveryOptionsModal";
+import OrderConfirmation from "./OrderConfirmation";
 
 interface Product {
   id: string;
@@ -40,10 +42,8 @@ interface DeliveryPartner {
   available: boolean;
 }
 
-interface ProductWithDistance extends Product {
+interface ProductWithDistance extends ProductData {
   distance: number;
-  farmerName: string;
-  farmerPhone: string;
   farmLocation: Location;
 }
 
@@ -56,6 +56,8 @@ const BuyerDashboard = ({ user }: { user: Profile }) => {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithDistance | null>(null);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState<any>(null);
 
   const categories = [
     { value: 'all', label: 'All Products' },
@@ -76,24 +78,19 @@ const BuyerDashboard = ({ user }: { user: Profile }) => {
       const location = await getCurrentLocation();
       setUserLocation(location);
       
-      // Get all products from Supabase
-      const products = await supabaseUserStore.getProducts();
-      const farms = await supabaseUserStore.getFarms();
-      const allProducts: ProductWithDistance[] = [];
-
-      products.forEach(product => {
-        const farm = farms.find(f => f.id === product.farm_id);
-        if (farm) {
-          const farmLoc = farm.location as any;
-          const distance = calculateDistance(location, { lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 });
-          allProducts.push({
-            ...product,
-            distance,
-            farmerName: 'Farmer', // Will be populated from profiles
-            farmerPhone: product.contact_info || '',
-            farmLocation: { lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 }
-          });
-        }
+      // Use static products with random distances
+      const allProducts: ProductWithDistance[] = staticProducts.map(product => {
+        // Generate random farm location within 50km radius
+        const randomLat = location.lat + (Math.random() - 0.5) * 0.5; // ~50km range
+        const randomLng = location.lng + (Math.random() - 0.5) * 0.5;
+        const farmLocation = { lat: randomLat, lng: randomLng };
+        const distance = calculateDistance(location, farmLocation);
+        
+        return {
+          ...product,
+          distance,
+          farmLocation
+        };
       });
 
       // Sort by distance
@@ -107,23 +104,14 @@ const BuyerDashboard = ({ user }: { user: Profile }) => {
         variant: "destructive"
       });
       
-      // Fallback without location
-      const products = await supabaseUserStore.getProducts();
-      const farms = await supabaseUserStore.getFarms();
-      const allProducts: ProductWithDistance[] = [];
-      
-      products.forEach(product => {
-        const farm = farms.find(f => f.id === product.farm_id);
-        if (farm) {
-          const farmLoc = farm.location as any;
-          allProducts.push({
-            ...product,
-            distance: 0,
-            farmerName: 'Farmer',
-            farmerPhone: product.contact_info || '',
-            farmLocation: { lat: farmLoc?.lat || 0, lng: farmLoc?.lng || 0 }
-          });
-        }
+      // Fallback without location - use static products with random distances
+      const allProducts: ProductWithDistance[] = staticProducts.map(product => {
+        const farmLocation = { lat: 12.9716 + Math.random() * 0.1, lng: 77.5946 + Math.random() * 0.1 }; // Around Bangalore
+        return {
+          ...product,
+          distance: Math.random() * 50, // Random distance up to 50km
+          farmLocation
+        };
       });
       
       setProducts(allProducts);
@@ -150,12 +138,18 @@ const BuyerDashboard = ({ user }: { user: Profile }) => {
     setShowDeliveryModal(true);
   };
 
-  const handleDirectBuy = (product: ProductWithDistance) => {
-    toast({
-      title: "Contact farmer directly",
-      description: `Call ${product.farmerName} at ${product.farmerPhone}`,
-      className: "bg-blue-50 border-blue-200"
-    });
+  const handleDirectBuy = (product: ProductWithDistance, quantity: number = 1) => {
+    const order = {
+      id: `ORD-${Date.now()}`,
+      product,
+      quantity,
+      total: product.price * quantity,
+      orderType: 'direct' as const
+    };
+    
+    setCurrentOrder(order);
+    setShowOrderConfirmation(true);
+    setShowDeliveryModal(false);
   };
 
   const handleDeliveryOrder = (product: ProductWithDistance, deliveryPartner: DeliveryPartner, quantity: number) => {
@@ -163,12 +157,21 @@ const BuyerDashboard = ({ user }: { user: Profile }) => {
     const deliveryFee = Math.round(product.distance * deliveryPartner.price_per_km);
     const total = productTotal + deliveryFee;
     
-    toast({
-      title: "Order placed for delivery!",
-      description: `Total: ₹${total} (Product: ₹${productTotal} + Delivery: ₹${deliveryFee})`,
-      className: "bg-green-50 border-green-200"
-    });
+    const order = {
+      id: `ORD-${Date.now()}`,
+      product,
+      quantity,
+      total,
+      deliveryFee,
+      orderType: 'delivery' as const,
+      deliveryPartner: {
+        name: deliveryPartner.name,
+        phone: deliveryPartner.phone
+      }
+    };
     
+    setCurrentOrder(order);
+    setShowOrderConfirmation(true);
     setShowDeliveryModal(false);
   };
 
@@ -314,6 +317,13 @@ const BuyerDashboard = ({ user }: { user: Profile }) => {
           onDeliveryOrder={handleDeliveryOrder}
         />
       )}
+
+      {/* Order Confirmation Modal */}
+      <OrderConfirmation
+        isOpen={showOrderConfirmation}
+        onClose={() => setShowOrderConfirmation(false)}
+        order={currentOrder}
+      />
     </div>
   );
 };

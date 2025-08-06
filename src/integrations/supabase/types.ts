@@ -85,6 +85,51 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          delivery_fee: number | null
+          delivery_partner_id: string | null
+          id: string
+          order_status: string
+          order_type: string
+          payment_status: string
+          product_id: string
+          quantity: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          delivery_fee?: number | null
+          delivery_partner_id?: string | null
+          id?: string
+          order_status?: string
+          order_type: string
+          payment_status?: string
+          product_id: string
+          quantity: number
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          delivery_fee?: number | null
+          delivery_partner_id?: string | null
+          id?: string
+          order_status?: string
+          order_type?: string
+          payment_status?: string
+          product_id?: string
+          quantity?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           additional_info: string | null
