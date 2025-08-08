@@ -8,6 +8,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import FarmerDashboardPage from "./pages/FarmerDashboardPage";
+import BuyerDashboardPage from "./pages/BuyerDashboardPage";
 import ProductDetail from "./pages/ProductDetail";
 import MarketPrices from "./pages/MarketPrices";
 import NotFound from "./pages/NotFound";
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/farmer-dashboard" element={<FarmerDashboardPage />} />
+          <Route path="/buyer-dashboard" element={<BuyerDashboardPage />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/market-prices" element={<MarketPrices />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

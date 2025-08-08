@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { languageStore } from '@/store/languageStore';
+import { supabaseUserStore } from '@/store/supabaseUserStore';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -114,12 +115,25 @@ export default function Auth() {
           if (error) throw error;
         }
 
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome back!',
-        });
+        // Get user profile to determine dashboard route
+        const currentUser = supabaseUserStore.getCurrentUser();
+        if (currentUser) {
+          const profile = await supabaseUserStore.getProfile(currentUser.id);
+          
+          toast({
+            title: 'Login Successful',
+            description: 'Welcome back!',
+          });
 
-        navigate('/dashboard');
+          // Redirect based on user type
+          if (profile?.user_type === 'farmer') {
+            navigate('/farmer-dashboard');
+          } else {
+            navigate('/buyer-dashboard');
+          }
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         // Signup
         const redirectUrl = `${window.location.origin}/dashboard`;
