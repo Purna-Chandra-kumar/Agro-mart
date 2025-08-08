@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { languageStore } from '@/store/languageStore';
 
@@ -16,6 +16,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [userType, setUserType] = useState<'buyer' | 'farmer'>('buyer');
+  const [farmerAuthMethod, setFarmerAuthMethod] = useState<'email' | 'aadhaar'>('email');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -53,8 +54,8 @@ export default function Auth() {
       return;
     }
 
-    // Aadhaar validation for farmers
-    if (userType === 'farmer' && formData.aadharNumber.length !== 12) {
+    // Aadhaar validation for farmers using Aadhaar method
+    if (userType === 'farmer' && farmerAuthMethod === 'aadhaar' && formData.aadharNumber.length !== 12) {
       toast({
         title: 'Error',
         description: 'Aadhaar number must be exactly 12 digits',
@@ -67,33 +68,42 @@ export default function Auth() {
     try {
       if (mode === 'login') {
         if (userType === 'farmer') {
-          // For farmers, use Aadhaar + DOB + Password to find and authenticate
-          // Since Supabase auth requires email, we'll need to find the user by Aadhaar first
-          const { data: profiles, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_id')
-            .eq('aadhar_number', formData.aadharNumber)
-            .eq('date_of_birth', formData.dateOfBirth)
-            .eq('user_type', 'farmer')
-            .single();
+          if (farmerAuthMethod === 'aadhaar') {
+            // For farmers using Aadhaar, use Aadhaar + DOB + Password to find and authenticate
+            const { data: profiles, error: profileError } = await supabase
+              .from('profiles')
+              .select('user_id')
+              .eq('aadhar_number', formData.aadharNumber)
+              .eq('date_of_birth', formData.dateOfBirth)
+              .eq('user_type', 'farmer')
+              .single();
 
-          if (profileError || !profiles) {
-            throw new Error('Invalid Aadhaar number or date of birth');
+            if (profileError || !profiles) {
+              throw new Error('Invalid Aadhaar number or date of birth');
+            }
+
+            // Get the user's email from auth.users to perform login
+            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profiles.user_id);
+            
+            if (userError || !userData.user?.email) {
+              throw new Error('User not found');
+            }
+
+            const { error } = await supabase.auth.signInWithPassword({
+              email: userData.user.email,
+              password: formData.password,
+            });
+
+            if (error) throw new Error('Invalid credentials');
+          } else {
+            // Farmer login with email
+            const { error } = await supabase.auth.signInWithPassword({
+              email: formData.email,
+              password: formData.password,
+            });
+
+            if (error) throw error;
           }
-
-          // Get the user's email from auth.users to perform login
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profiles.user_id);
-          
-          if (userError || !userData.user?.email) {
-            throw new Error('User not found');
-          }
-
-          const { error } = await supabase.auth.signInWithPassword({
-            email: userData.user.email,
-            password: formData.password,
-          });
-
-          if (error) throw new Error('Invalid Aadhaar number or password');
         } else {
           // Buyer login with email
           const { error } = await supabase.auth.signInWithPassword({
@@ -115,29 +125,47 @@ export default function Auth() {
         const redirectUrl = `${window.location.origin}/dashboard`;
         
         if (userType === 'farmer') {
-          // For farmer signup, we still need an email for Supabase auth
-          // We'll use aadhaar@farmer.local as a placeholder
-          const farmerEmail = `${formData.aadharNumber}@farmer.local`;
-          
-          const { error } = await supabase.auth.signUp({
-            email: farmerEmail,
-            password: formData.password,
-            options: {
-              emailRedirectTo: redirectUrl,
-              data: {
-                name: formData.name,
-                user_type: userType,
-                aadhar_number: formData.aadharNumber,
-                date_of_birth: formData.dateOfBirth
+          if (farmerAuthMethod === 'aadhaar') {
+            // For farmer signup with Aadhaar, use placeholder email
+            const farmerEmail = `${formData.aadharNumber}@farmer.local`;
+            
+            const { error } = await supabase.auth.signUp({
+              email: farmerEmail,
+              password: formData.password,
+              options: {
+                emailRedirectTo: redirectUrl,
+                data: {
+                  name: formData.name,
+                  user_type: userType,
+                  aadhar_number: formData.aadharNumber,
+                  date_of_birth: formData.dateOfBirth
+                }
               }
-            }
-          });
+            });
 
-          if (error) throw error;
+            if (error) throw error;
+          } else {
+            // Farmer signup with email
+            const { error } = await supabase.auth.signUp({
+              email: formData.email,
+              password: formData.password,
+              options: {
+                emailRedirectTo: redirectUrl,
+                data: {
+                  name: formData.name,
+                  user_type: userType
+                }
+              }
+            });
+
+            if (error) throw error;
+          }
 
           toast({
             title: 'Account Created',
-            description: 'Your farmer account has been created successfully!',
+            description: farmerAuthMethod === 'aadhaar' 
+              ? 'Your farmer account has been created successfully!' 
+              : 'Please check your email to verify your account.',
           });
         } else {
           // Buyer signup with email
@@ -266,56 +294,119 @@ export default function Auth() {
                   </>
                 )}
 
-                {/* Farmer Authentication Fields - Aadhaar Only */}
+                {/* Farmer Authentication Method Toggle */}
                 {userType === 'farmer' && (
                   <>
-                    <div className="space-y-2">
-                      <Label htmlFor="aadhar">Aadhaar Number (12 digits)</Label>
-                      <Input
-                        id="aadhar"
-                        type="text"
-                        maxLength={12}
-                        pattern="[0-9]{12}"
-                        value={formData.aadharNumber}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          setFormData(prev => ({ ...prev, aadharNumber: value }));
-                        }}
-                        placeholder="Enter 12-digit Aadhaar number"
-                        required
-                      />
+                    <div className="space-y-3">
+                      <Label>Select Login Method</Label>
+                      <RadioGroup 
+                        value={farmerAuthMethod} 
+                        onValueChange={(value) => setFarmerAuthMethod(value as 'email' | 'aadhaar')}
+                        className="flex flex-row space-x-6"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="email" id="email-method" />
+                          <Label htmlFor="email-method">Email Login</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="aadhaar" id="aadhaar-method" />
+                          <Label htmlFor="aadhaar-method">Aadhaar Login</Label>
+                        </div>
+                      </RadioGroup>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dob">Date of Birth</Label>
-                      <Input
-                        id="dob"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    {mode === 'signup' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm Password</Label>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          value={formData.confirmPassword}
-                          onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          required
-                        />
-                      </div>
+
+                    {/* Email Method Fields */}
+                    {farmerAuthMethod === 'email' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="Enter your email address"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        {mode === 'signup' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Input
+                              id="confirmPassword"
+                              type="password"
+                              value={formData.confirmPassword}
+                              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                              required
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Aadhaar Method Fields */}
+                    {farmerAuthMethod === 'aadhaar' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="aadhar">Aadhaar Number (12 digits)</Label>
+                          <Input
+                            id="aadhar"
+                            type="text"
+                            maxLength={12}
+                            pattern="[0-9]{12}"
+                            value={formData.aadharNumber}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              setFormData(prev => ({ ...prev, aadharNumber: value }));
+                            }}
+                            placeholder="Enter Aadhaar Number"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dob">Date of Birth</Label>
+                          <Input
+                            id="dob"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                            placeholder="Enter Date of Birth"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        {mode === 'signup' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Input
+                              id="confirmPassword"
+                              type="password"
+                              value={formData.confirmPassword}
+                              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                              required
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </>
                 )}
