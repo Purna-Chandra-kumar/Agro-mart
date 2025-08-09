@@ -70,32 +70,15 @@ export default function Auth() {
       if (mode === 'login') {
         if (userType === 'farmer') {
           if (farmerAuthMethod === 'aadhaar') {
-            // For farmers using Aadhaar, use Aadhaar + DOB + Password to find and authenticate
-            const { data: profiles, error: profileError } = await supabase
-              .from('profiles')
-              .select('user_id')
-              .eq('aadhar_number', formData.aadharNumber)
-              .eq('date_of_birth', formData.dateOfBirth)
-              .eq('user_type', 'farmer')
-              .single();
-
-            if (profileError || !profiles) {
-              throw new Error('Invalid Aadhaar number or date of birth');
-            }
-
-            // Get the user's email from auth.users to perform login
-            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profiles.user_id);
+            // For farmers using Aadhaar, authenticate using internal email format
+            const generatedEmail = `farmer_${formData.aadharNumber}@internal.local`;
             
-            if (userError || !userData.user?.email) {
-              throw new Error('User not found');
-            }
-
             const { error } = await supabase.auth.signInWithPassword({
-              email: userData.user.email,
+              email: generatedEmail,
               password: formData.password,
             });
 
-            if (error) throw new Error('Invalid credentials');
+            if (error) throw new Error('Invalid Aadhaar number, date of birth or password');
           } else {
             // Farmer login with email
             const { error } = await supabase.auth.signInWithPassword({
@@ -116,9 +99,9 @@ export default function Auth() {
         }
 
         // Get user profile to determine dashboard route
-        const currentUser = supabaseUserStore.getCurrentUser();
-        if (currentUser) {
-          const profile = await supabaseUserStore.getProfile(currentUser.id);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const profile = await supabaseUserStore.getProfile(session.user.id);
           
           toast({
             title: 'Login Successful',
@@ -140,11 +123,11 @@ export default function Auth() {
         
         if (userType === 'farmer') {
           if (farmerAuthMethod === 'aadhaar') {
-            // For farmer signup with Aadhaar, use placeholder email
-            const farmerEmail = `${formData.aadharNumber}@farmer.local`;
+            // For farmer signup with Aadhaar, use internal email format
+            const generatedEmail = `farmer_${formData.aadharNumber}@internal.local`;
             
             const { error } = await supabase.auth.signUp({
-              email: farmerEmail,
+              email: generatedEmail,
               password: formData.password,
               options: {
                 emailRedirectTo: redirectUrl,
