@@ -52,15 +52,13 @@ export default function Auth() {
   const handleDigiLockerCallback = async (token: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${window.location.origin}/functions/v1/digilocker-auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
+      const { data, error } = await supabase.functions.invoke('digilocker-auth', {
+        body: { token },
       });
 
-      const data = await response.json();
+      if (error) {
+        throw new Error(error.message || 'Authentication failed');
+      }
 
       if (data.success && data.session) {
         // Set the session in Supabase
@@ -96,8 +94,13 @@ export default function Auth() {
   const handleDigiLockerAuth = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${window.location.origin}/functions/v1/digilocker-auth?action=initiate`);
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('digilocker-auth', {
+        body: { action: 'initiate' },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to connect to DigiLocker');
+      }
       
       if (data.authUrl) {
         // Redirect to DigiLocker for authentication
