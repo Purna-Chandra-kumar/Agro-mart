@@ -34,7 +34,13 @@ serve(async (req) => {
     );
 
     const url = new URL(req.url);
-    const action = url.searchParams.get('action');
+    let action = url.searchParams.get('action');
+    
+    // Handle POST requests with action in body
+    if (req.method === 'POST' && !action) {
+      const body = await req.json();
+      action = body.action;
+    }
 
     if (action === 'initiate') {
       // Step 1: Initiate DigiLocker OAuth flow
@@ -170,7 +176,7 @@ serve(async (req) => {
     }
 
     // Handle login verification from frontend
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && !action) {
       const { token } = await req.json();
 
       if (!token) {
