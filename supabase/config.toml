@@ -27,6 +27,3 @@ port = 54325
 [auth]
 enabled = true
 port = 54326
-
-[functions.digilocker-auth]
-verify_jwt = false
