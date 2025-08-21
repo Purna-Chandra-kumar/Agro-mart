@@ -22,10 +22,7 @@ Make sure you have Node.js installed on your machine. We recommend using [nvm](h
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/fresh-farm-find.git
-cd fresh-farm-find
-```
-
+git clone https://github.com/your-username
 2. Install dependencies:
 ```bash
 npm install
@@ -71,11 +68,6 @@ We welcome contributions! Here's how you can help:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🌱 Our Mission
 
 Supporting local agriculture and sustainable farming practices while making fresh, healthy food accessible to everyone in our community.
