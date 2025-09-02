@@ -30,7 +30,6 @@ const App = () => (
           <Route path="/buyer-dashboard" element={<BuyerDashboardPage />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/market-prices" element={<MarketPrices />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

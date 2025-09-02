@@ -40,12 +40,10 @@ export default function Auth() {
     checkUser();
   }, [navigate]);
 
-  // Validate Aadhaar number format (12 digits)
   const validateAadhaar = (aadhaar: string) => {
     return /^\d{12}$/.test(aadhaar);
   };
 
-  // Validate password strength
   const validatePassword = (password: string) => {
     return password.length >= 8 && 
            /\d/.test(password) && 
@@ -56,7 +54,7 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validation checks for farmers using Aadhaar
+    // Check Aadhaar validation for farmers
     if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
       if (!validateAadhaar(formData.aadharNumber)) {
         toast({
@@ -79,7 +77,7 @@ export default function Auth() {
       }
     }
 
-    // Password confirmation validation for signup
+    // Check password confirmation
     if (mode === 'signup' && formData.password !== formData.confirmPassword) {
       toast({
         title: 'Error',
@@ -90,7 +88,7 @@ export default function Auth() {
       return;
     }
 
-    // Password strength validation for signup
+    // Check password strength
     if (mode === 'signup' && !validatePassword(formData.password)) {
       toast({
         title: 'Error',
@@ -105,7 +103,6 @@ export default function Auth() {
       if (mode === 'login') {
         if (userType === 'farmer') {
           if (farmerAuthMethod === 'aadhaar') {
-            // For farmers using Aadhaar + DOB, authenticate using internal email format
             const generatedEmail = `farmer_${formData.aadharNumber}@internal.local`;
             
             const { error } = await supabase.auth.signInWithPassword({
@@ -115,7 +112,6 @@ export default function Auth() {
 
             if (error) throw new Error('Invalid Aadhaar number, date of birth or password');
           } else {
-            // Farmer login with email
             const { error } = await supabase.auth.signInWithPassword({
               email: formData.email,
               password: formData.password,
@@ -124,7 +120,6 @@ export default function Auth() {
             if (error) throw error;
           }
         } else {
-          // Buyer login with email
           const { error } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password,
@@ -133,7 +128,7 @@ export default function Auth() {
           if (error) throw error;
         }
 
-        // Get user profile to determine dashboard route
+        // Redirect to appropriate dashboard
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           const profile = await supabaseUserStore.getProfile(session.user.id);
@@ -143,7 +138,7 @@ export default function Auth() {
             description: 'Welcome back!',
           });
 
-          // Redirect based on user type
+          // Route to correct dashboard
           if (profile?.user_type === 'farmer') {
             navigate('/farmer-dashboard');
           } else {
@@ -153,12 +148,11 @@ export default function Auth() {
           navigate('/dashboard');
         }
       } else {
-        // Signup
+        // Create new account
         const redirectUrl = `${window.location.origin}/dashboard`;
         
         if (userType === 'farmer') {
           if (farmerAuthMethod === 'aadhaar') {
-            // For farmer signup with Aadhaar + DOB, use internal email format
             const generatedEmail = `farmer_${formData.aadharNumber}@internal.local`;
             
             const { error } = await supabase.auth.signUp({
@@ -182,7 +176,6 @@ export default function Auth() {
               description: 'Your farmer account has been created successfully!',
             });
           } else {
-            // Farmer signup with email
             const { error } = await supabase.auth.signUp({
               email: formData.email,
               password: formData.password,
@@ -203,7 +196,6 @@ export default function Auth() {
             });
           }
         } else {
-          // Buyer signup with email
           const { error } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
