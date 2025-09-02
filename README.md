@@ -27,19 +27,6 @@ So here we are. A simple platform where farmers can sell directly to people who 
 ## Getting Started
 
 You'll need Node.js installed. If you don't have it, grab it from [nodejs.org](https://nodejs.org).
-
-```bash
-# Clone this repo
-git clone https://github.com/yourusername/freshfarm-connect.git
-cd freshfarm-connect
-
-# Install everything
-npm install
-
-# Fire it up
-npm run dev
-```
-
 Then open http://localhost:8080 and you're good to go.
 
 ## Tech Stack
