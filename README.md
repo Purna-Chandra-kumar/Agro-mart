@@ -8,7 +8,7 @@ Ok so here's the deal - I was living in the city and couldn't find decent fresh 
 
 Then I met this farmer uncle at my village who was literally selling the same quality stuff for like 1/10th the price but couldn't reach customers directly. That's when it clicked - why not just build something to connect them directly?
 
-Been working on this for a few months now and it's actually turning out pretty decent.
+Been working on this for a few months now and it's actually turning out pretty decent..
 
 ## What You Can Do With This
 
