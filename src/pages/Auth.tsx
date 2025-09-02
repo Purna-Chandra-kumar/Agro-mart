@@ -30,21 +30,24 @@ export default function Auth() {
   });
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in when page loads
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // Already logged in, redirect to dashboard
         navigate('/dashboard');
       }
     };
     checkUser();
   }, [navigate]);
 
-  const validateAadhaar = (aadhaar: string) => {
-    return /^\d{12}$/.test(aadhaar);
+  // Simple validation functions
+  const validateAadhaar = (aadhaar) => {
+    return /^\d{12}$/.test(aadhaar); // Just check if it's 12 digits
   };
 
-  const validatePassword = (password: string) => {
+  const validatePassword = (password) => {
+    // Password should have at least 8 chars, 1 number, 1 special char
     return password.length >= 8 && 
            /\d/.test(password) && 
            /[!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -54,12 +57,12 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Check Aadhaar validation for farmers
+    // Validate farmer aadhaar stuff
     if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
       if (!validateAadhaar(formData.aadharNumber)) {
         toast({
-          title: 'Error',
-          description: 'Please enter a valid 12-digit Aadhaar number',
+          title: 'Oops!',
+          description: 'Aadhaar number should be exactly 12 digits',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -68,8 +71,8 @@ export default function Auth() {
       
       if (!formData.dateOfBirth) {
         toast({
-          title: 'Error',
-          description: 'Date of birth is required',
+          title: 'Missing Info',
+          description: 'Please enter your date of birth',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -77,22 +80,22 @@ export default function Auth() {
       }
     }
 
-    // Check password confirmation
+    // Make sure passwords match during signup
     if (mode === 'signup' && formData.password !== formData.confirmPassword) {
       toast({
-        title: 'Error',
-        description: 'Passwords do not match',
+        title: 'Password Mismatch',
+        description: 'The passwords you entered don\'t match',
         variant: 'destructive',
       });
       setIsLoading(false);
       return;
     }
 
-    // Check password strength
+    // Check if password is strong enough
     if (mode === 'signup' && !validatePassword(formData.password)) {
       toast({
-        title: 'Error',
-        description: 'Password must be at least 8 characters with 1 number and 1 special character',
+        title: 'Weak Password',
+        description: 'Password needs 8+ characters, 1 number and 1 special character',
         variant: 'destructive',
       });
       setIsLoading(false);

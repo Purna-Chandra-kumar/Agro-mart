@@ -63,7 +63,7 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom app colors
+				// Some nice green and orange colors I added
 				green: {
 					50: '#f0fdf4',
 					100: '#dcfce7',

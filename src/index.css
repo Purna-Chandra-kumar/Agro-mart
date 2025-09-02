@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles and design tokens */
+/* My custom styles */
 
 @layer base {
   :root {
@@ -97,14 +97,17 @@
 }
 
 @layer components {
+  /* Green gradient for hero sections */
   .hero-gradient {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   }
   
+  /* Nice hover effect for cards */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
   
+  /* Gradient text effect */
   .text-gradient {
     background: linear-gradient(135deg, #22c55e, #16a34a);
     -webkit-background-clip: text;
