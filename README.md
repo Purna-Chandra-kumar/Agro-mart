@@ -38,10 +38,6 @@ We kept it simple but modern:
 - React Router for navigation
 - Vite for fast development
 
-## Contributing
-
-Found a bug? Have an idea? Contributions are welcome!
-
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
