@@ -7,7 +7,6 @@ A farmer-to-buyer marketplace connecting local farmers directly with consumers.
 This project started when I couldn't find decent fresh vegetables without paying ridiculous prices at those fancy organic stores. Then I met a farmer who was selling amazing produce for a fraction of the price but couldn't reach customers directly. So I built this to solve that problem.
 
 ## What it does
-
 **For Farmers:**
 - Create profiles with farm photos
 - List products with real-time pricing
@@ -21,6 +20,7 @@ This project started when I couldn't find decent fresh vegetables without paying
 - Compare prices easily
 - Order directly from farmers
 - Know exactly where food comes from
+
 
 ## Tech Stack
 
@@ -39,7 +39,6 @@ npm run dev
 ```
 
 The app will start on `localhost:5173`
-
 ## Features
 
 - Dual authentication (email + Aadhaar for farmers)
@@ -75,7 +74,4 @@ Keep it simple and focused.
 ## License
 
 MIT - feel free to use this however you want.
-
----
-
 *Built to help small farms thrive* 🌱
