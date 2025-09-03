@@ -1,4 +1,4 @@
-// Static product data for demonstration
+// Product data for the marketplace
 export interface ProductData {
   id: string;
   name: string;
@@ -14,7 +14,6 @@ export interface ProductData {
 }
 
 export const staticProducts: ProductData[] = [
-  // Leafy Greens
   {
     id: '1',
     name: 'Fresh Spinach',

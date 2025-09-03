@@ -1,68 +1,81 @@
-# Agro Mart - Fresh Farm Connect
+# Agro Mart
 
-Yeah so basically this is a marketplace app I've been working on to connect farmers directly with buyers. Got tired of the whole middleman thing and thought there's gotta be a better way.
+A farmer-to-buyer marketplace connecting local farmers directly with consumers.
 
-## The Story Behind This
+## About
 
-Ok so here's the deal - I was living in the city and couldn't find decent fresh vegetables anywhere without paying crazy prices at those fancy organic stores. Like seriously, ₹200 for tomatoes?? 
+This project started when I couldn't find decent fresh vegetables without paying ridiculous prices at those fancy organic stores. Then I met a farmer who was selling amazing produce for a fraction of the price but couldn't reach customers directly. So I built this to solve that problem.
 
-Then I met this farmer uncle at my village who was literally selling the same quality stuff for like 1/10th the price but couldn't reach customers directly. That's when it clicked - why not just build something to connect them directly?
+## What it does
 
-Been working on this for a few months now and it's actually turning out pretty decent..
+**For Farmers:**
+- Create profiles with farm photos
+- List products with real-time pricing
+- Manage inventory
+- Connect directly with buyers
+- Get fair prices without middlemen
 
-## What You Can Do With This
-
-**Farmers can:**
-- Make a profile with photos of their farm and crops
-- List products with prices (no commission fees!)
-- Update inventory when harvest comes in
-- Chat directly with buyers 
-- Actually make decent money for once
-
-**Buyers get to:**
-- Find real local farms around them
+**For Buyers:**
+- Find local farms and fresh produce
 - See what's actually in season
-- Compare prices without running around markets
+- Compare prices easily
 - Order directly from farmers
-- Know exactly where their food is coming from
+- Know exactly where food comes from
 
-Pretty straightforward stuff, nothing too fancy.
+## Tech Stack
 
-## How to Run This Thing
+- React 18 with TypeScript
+- Tailwind CSS for styling
+- Supabase for backend (auth, database, storage)
+- React Router for navigation
+- Vite for development
+- React Query for state management
 
-First install Node.js if you don't have it (just google it). Then:
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-Should start on localhost:8080 or something like that.
+The app will start on `localhost:5173`
 
-## What I Used
+## Features
 
-Kept the tech stack pretty simple:
-- React + TypeScript (because I don't want to deal with JS bugs)
-- Tailwind for styling (honestly saves so much time)
-- Supabase for backend stuff (auth, database, all that)
-- React Router for different pages
-- Vite because it's fast
+- Dual authentication (email + Aadhaar for farmers)
+- Real-time product listings
+- Location-based farmer discovery
+- Direct messaging between farmers and buyers
+- Order management system
+- Delivery partner integration
+
+## Project Structure
+
+```
+src/
+├── components/     # Reusable UI components
+├── pages/         # Route components
+├── hooks/         # Custom React hooks
+├── store/         # State management
+├── utils/         # Helper functions
+└── data/          # Static data and types
+```
 
 ## Contributing
 
-If you find bugs or want to add features, just:
-1. Fork this repo
-2. Make your changes 
-3. Send a pull request
+Found a bug or want to add a feature? 
 
-Don't overthink it.
+1. Fork the repo
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-## The Big Picture
+Keep it simple and focused.
 
-Look, I'm not trying to revolutionize agriculture or anything. Just want to make it easier for farmers to sell their stuff directly to people who actually care about quality food. 
+## License
 
-If this works out, maybe we can help small farms survive instead of getting crushed by big distributors. That would be pretty cool.
+MIT - feel free to use this however you want.
 
 ---
 
-*Built with ❤️ and a lot of chai ☕*
+*Built to help small farms thrive* 🌱
