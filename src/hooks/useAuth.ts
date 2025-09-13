@@ -3,42 +3,48 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseUserStore } from '@/store/supabaseUserStore';
+import { validateAadhaar, validatePassword } from '@/utils/validation';
+
+interface FormData {
+  name?: string;
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  phone?: string;
+  whatsappNumber?: string;
+  aadharNumber?: string;
+  dateOfBirth?: string;
+}
 
 export const useAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateAadhaar = (aadhaar: string) => {
-    return /^\d{12}$/.test(aadhaar);
-  };
-
-  const validatePassword = (password: string) => {
-    return password.length >= 8 && 
-           /\d/.test(password) && 
-           /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  };
-
-  const handleLogin = async (formData: any, userType: string, farmerAuthMethod?: string) => {
+  const handleLogin = async (
+    formData: FormData, 
+    userType: 'buyer' | 'farmer', 
+    farmerAuthMethod?: 'email' | 'aadhaar'
+  ) => {
     setIsLoading(true);
 
-    if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-      if (!validateAadhaar(formData.aadharNumber)) {
-        toast({
-          title: 'Invalid Aadhaar',
-          description: 'Aadhaar number should be exactly 12 digits',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-      }
-    }
-
     try {
-      let email = formData.email;
-      
+      // For farmer Aadhaar login, validate the Aadhaar number
       if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        email = `farmer_${formData.aadharNumber}@internal.local`;
+        if (!formData.aadharNumber || !validateAadhaar(formData.aadharNumber)) {
+          toast({
+            title: 'Invalid Aadhaar',
+            description: 'Please enter a valid 12-digit Aadhaar number',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      // Determine email for login
+      let email = formData.email;
+      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
+        email = `farmer_${formData.aadharNumber}@agro.local`;
       }
 
       const { error } = await supabase.auth.signInWithPassword({
@@ -46,31 +52,31 @@ export const useAuth = () => {
         password: formData.password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
+      // Get user session and profile
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const profile = await supabaseUserStore.getProfile(session.user.id);
         
         toast({
           title: 'Welcome back!',
-          description: 'Successfully signed in',
+          description: 'Login successful',
         });
 
+        // Navigate based on user type
         if (profile?.user_type === 'farmer') {
           navigate('/farmer-dashboard');
-        } else {
+        } else if (profile?.user_type === 'buyer') {
           navigate('/buyer-dashboard');
+        } else {
+          navigate('/dashboard');
         }
-      } else {
-        navigate('/dashboard');
       }
     } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: error.message || 'Please check your credentials',
+        description: error.message || 'Invalid credentials',
         variant: 'destructive',
       });
     } finally {
@@ -78,43 +84,56 @@ export const useAuth = () => {
     }
   };
 
-  const handleSignup = async (formData: any, userType: string, farmerAuthMethod?: string) => {
+  const handleSignup = async (
+    formData: FormData, 
+    userType: 'buyer' | 'farmer', 
+    farmerAuthMethod?: 'email' | 'aadhaar'
+  ) => {
     setIsLoading(true);
 
-    if (!validatePassword(formData.password)) {
-      toast({
-        title: 'Weak Password',
-        description: 'Password needs 8+ characters, 1 number and 1 special character',
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: 'Password Mismatch',
-        description: 'Passwords do not match',
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-      if (!validateAadhaar(formData.aadharNumber) || !formData.dateOfBirth) {
+    try {
+      // Validate password strength
+      if (!validatePassword(formData.password)) {
         toast({
-          title: 'Missing Information',
-          description: 'Please provide valid Aadhaar number and date of birth',
+          title: 'Password too weak',
+          description: 'Password must be at least 8 characters with 1 number and 1 special character',
           variant: 'destructive',
         });
-        setIsLoading(false);
         return;
       }
-    }
 
-    try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      // Check password confirmation
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: 'Password mismatch',
+          description: 'Password and confirmation do not match',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Additional validation for farmer Aadhaar signup
+      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
+        if (!formData.aadharNumber || !validateAadhaar(formData.aadharNumber)) {
+          toast({
+            title: 'Invalid Aadhaar',
+            description: 'Please enter a valid 12-digit Aadhaar number',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (!formData.dateOfBirth) {
+          toast({
+            title: 'Missing date of birth',
+            description: 'Date of birth is required for Aadhaar registration',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      // Prepare email and user metadata
       let email = formData.email;
       let userData: any = {
         name: formData.name,
@@ -122,7 +141,7 @@ export const useAuth = () => {
       };
 
       if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        email = `farmer_${formData.aadharNumber}@internal.local`;
+        email = `farmer_${formData.aadharNumber}@agro.local`;
         userData = {
           ...userData,
           aadhar_number: formData.aadharNumber,
@@ -140,24 +159,30 @@ export const useAuth = () => {
         email,
         password: formData.password,
         options: {
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: userData
         }
       });
 
       if (error) throw error;
 
-      const successMessage = userType === 'farmer' && farmerAuthMethod === 'aadhaar' 
-        ? 'Farmer account created successfully!'
-        : 'Account created! Please check your email to verify.';
+      const message = userType === 'farmer' && farmerAuthMethod === 'aadhaar' 
+        ? 'Farmer account created successfully!' 
+        : 'Account created! Please check your email for verification.';
 
       toast({
-        title: 'Account Created',
-        description: successMessage,
+        title: 'Registration successful',
+        description: message,
       });
+
+      // For Aadhaar registration, redirect directly to dashboard
+      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
+        navigate('/farmer-dashboard');
+      }
+      
     } catch (error: any) {
       toast({
-        title: 'Signup Failed',
+        title: 'Registration failed',
         description: error.message,
         variant: 'destructive',
       });

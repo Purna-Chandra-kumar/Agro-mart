@@ -1,77 +1,135 @@
 # Agro Mart
 
-A farmer-to-buyer marketplace connecting local farmers directly with consumers.
+A direct farmer-to-buyer marketplace platform built with React and Supabase.
 
-## About
+## Overview
 
-This project started when I couldn't find decent fresh vegetables without paying ridiculous prices at those fancy organic stores. Then I met a farmer who was selling amazing produce for a fraction of the price but couldn't reach customers directly. So I built this to solve that problem.
+Agro Mart connects local farmers directly with consumers, eliminating middlemen and ensuring fresh produce at fair prices. The platform supports both email-based authentication for buyers and dual authentication (email/Aadhaar) for farmers.
 
-## What it does
-**For Farmers:**
-- Create profiles with farm photos
+## Features
+
+### For Farmers
+- Create detailed farm profiles with photos
 - List products with real-time pricing
-- Manage inventory
-- Connect directly with buyers
-- Get fair prices without middlemen
+- Inventory management
+- Direct communication with buyers
+- Aadhaar-based authentication option
 
-**For Buyers:**
-- Find local farms and fresh produce
-- See what's actually in season
-- Compare prices easily
-- Order directly from farmers
-- Know exactly where food comes from
+### For Buyers  
+- Browse local farms and fresh produce
+- Seasonal availability tracking
+- Price comparison tools
+- Direct ordering from farmers
+- Traceability of produce source
 
+### Platform Features
+- Responsive design for all devices
+- Real-time notifications
+- Location-based farmer discovery
+- Order management system
+- Delivery partner integration
+- Multi-language support
 
 ## Tech Stack
 
-- React 18 with TypeScript
-- Tailwind CSS for styling
-- Supabase for backend (auth, database, storage)
-- React Router for navigation
-- Vite for development
-- React Query for state management
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Backend**: Supabase (Authentication, Database, Storage)
+- **Routing**: React Router v6
+- **State Management**: Zustand, React Query
+- **UI Components**: Radix UI, Shadcn/ui
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS with custom design system
 
 ## Getting Started
 
+### Prerequisites
+- Node.js 16+ 
+- npm or yarn
+
+### Installation
+
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd agro-mart
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
 
-The app will start on `localhost:5173`
-## Features
+The application will be available at `http://localhost:5173`
 
-- Dual authentication (email + Aadhaar for farmers)
-- Real-time product listings
-- Location-based farmer discovery
-- Direct messaging between farmers and buyers
-- Order management system
-- Delivery partner integration
+### Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
 ## Project Structure
 
 ```
 src/
-├── components/     # Reusable UI components
-├── pages/         # Route components
-├── hooks/         # Custom React hooks
-├── store/         # State management
-├── utils/         # Helper functions
-└── data/          # Static data and types
+├── components/          # Reusable UI components
+│   ├── auth/           # Authentication components
+│   └── ui/             # Base UI components
+├── pages/              # Route components  
+├── hooks/              # Custom React hooks
+├── store/              # State management
+├── utils/              # Helper functions
+├── data/               # Static data and types
+└── integrations/       # External service integrations
 ```
+
+## Development
+
+### Code Style
+- TypeScript strict mode enabled
+- ESLint and Prettier for code formatting
+- Conventional commit messages
+- Component-based architecture
+
+### Testing
+```bash
+npm run test        # Run unit tests
+npm run test:e2e    # Run end-to-end tests
+```
+
+### Build
+```bash
+npm run build       # Production build
+npm run preview     # Preview production build
+```
+
+## Database Schema
+
+The application uses Supabase with the following main tables:
+- `profiles` - User profile information
+- `farms` - Farm details and information  
+- `products` - Product listings
+- `orders` - Order management
+- `delivery_partners` - Delivery service providers
 
 ## Contributing
 
-Found a bug or want to add a feature? 
-
-1. Fork the repo
-2. Create a feature branch
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Submit a pull request
-
-Keep it simple and focused.
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
 ## License
 
-MIT - feel free to use this however you want.
-*Built to help small farms thrive* 🌱
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Built to support local farming communities
+- Inspired by the need for fair trade practices
+- Thanks to all farmers and buyers using the platform
