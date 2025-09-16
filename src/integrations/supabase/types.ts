@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      aadhaar_auth: {
+        Row: {
+          aadhaar_number: string
+          created_at: string
+          date_of_birth: string
+          id: string
+          is_verified: boolean
+          name: string
+          phone_number: string
+          updated_at: string
+        }
+        Insert: {
+          aadhaar_number: string
+          created_at?: string
+          date_of_birth: string
+          id?: string
+          is_verified?: boolean
+          name: string
+          phone_number: string
+          updated_at?: string
+        }
+        Update: {
+          aadhaar_number?: string
+          created_at?: string
+          date_of_birth?: string
+          id?: string
+          is_verified?: boolean
+          name?: string
+          phone_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_partners: {
         Row: {
           available: boolean | null
@@ -127,6 +160,36 @@ export type Database = {
           quantity?: number
           total_amount?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      otp_verifications: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          otp_code: string
+          phone_number: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone_number: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -252,7 +315,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_otps: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
