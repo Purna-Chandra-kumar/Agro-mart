@@ -23,32 +23,23 @@ export const useAuth = () => {
 
   const handleLogin = async (
     formData: FormData, 
-    userType: 'buyer' | 'farmer', 
-    farmerAuthMethod?: 'email' | 'aadhaar'
+    userType: 'buyer' | 'farmer'
   ) => {
     setIsLoading(true);
 
     try {
-      // For farmer Aadhaar login, validate the Aadhaar number
-      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        if (!formData.aadharNumber || !validateAadhaar(formData.aadharNumber)) {
-          toast({
-            title: 'Invalid Aadhaar',
-            description: 'Please enter a valid 12-digit Aadhaar number',
-            variant: 'destructive',
-          });
-          return;
-        }
-      }
-
-      // Determine email for login
-      let email = formData.email;
-      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        email = `farmer_${formData.aadharNumber}@agro.local`;
+      // Only handle buyer email login now - farmers use Aadhaar system
+      if (userType === 'farmer') {
+        toast({
+          title: 'Please use Aadhaar login',
+          description: 'Farmers should use the Aadhaar-based authentication system',
+          variant: 'destructive',
+        });
+        return;
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: formData.email,
         password: formData.password,
       });
 
@@ -86,12 +77,21 @@ export const useAuth = () => {
 
   const handleSignup = async (
     formData: FormData, 
-    userType: 'buyer' | 'farmer', 
-    farmerAuthMethod?: 'email' | 'aadhaar'
+    userType: 'buyer' | 'farmer'
   ) => {
     setIsLoading(true);
 
     try {
+      // Only handle buyer signup now - farmers use Aadhaar system
+      if (userType === 'farmer') {
+        toast({
+          title: 'Please use Aadhaar registration',
+          description: 'Farmers should use the Aadhaar-based registration system',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Validate password strength
       if (!validatePassword(formData.password)) {
         toast({
@@ -112,51 +112,16 @@ export const useAuth = () => {
         return;
       }
 
-      // Additional validation for farmer Aadhaar signup
-      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        if (!formData.aadharNumber || !validateAadhaar(formData.aadharNumber)) {
-          toast({
-            title: 'Invalid Aadhaar',
-            description: 'Please enter a valid 12-digit Aadhaar number',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        if (!formData.dateOfBirth) {
-          toast({
-            title: 'Missing date of birth',
-            description: 'Date of birth is required for Aadhaar registration',
-            variant: 'destructive',
-          });
-          return;
-        }
-      }
-
-      // Prepare email and user metadata
-      let email = formData.email;
-      let userData: any = {
+      // Prepare user metadata for buyers
+      const userData = {
         name: formData.name,
-        user_type: userType
+        user_type: userType,
+        phone: formData.phone,
+        whatsapp_number: formData.whatsappNumber
       };
 
-      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        email = `farmer_${formData.aadharNumber}@agro.local`;
-        userData = {
-          ...userData,
-          aadhar_number: formData.aadharNumber,
-          date_of_birth: formData.dateOfBirth
-        };
-      } else if (userType === 'buyer') {
-        userData = {
-          ...userData,
-          phone: formData.phone,
-          whatsapp_number: formData.whatsappNumber
-        };
-      }
-
       const { error } = await supabase.auth.signUp({
-        email,
+        email: formData.email,
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
@@ -166,19 +131,12 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      const message = userType === 'farmer' && farmerAuthMethod === 'aadhaar' 
-        ? 'Farmer account created successfully!' 
-        : 'Account created! Please check your email for verification.';
+      const message = 'Account created! Please check your email for verification.';
 
       toast({
         title: 'Registration successful',
         description: message,
       });
-
-      // For Aadhaar registration, redirect directly to dashboard
-      if (userType === 'farmer' && farmerAuthMethod === 'aadhaar') {
-        navigate('/farmer-dashboard');
-      }
       
     } catch (error: any) {
       toast({

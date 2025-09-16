@@ -23,11 +23,11 @@ export default function Auth() {
     checkUser();
   }, [navigate]);
 
-  const onSubmit = async (formData: any, farmerAuthMethod?: 'email' | 'aadhaar') => {
+  const onSubmit = async (formData: any) => {
     if (mode === 'login') {
-      await handleLogin(formData, userType, farmerAuthMethod);
+      await handleLogin(formData, userType);
     } else {
-      await handleSignup(formData, userType, farmerAuthMethod);
+      await handleSignup(formData, userType);
     }
   };
 

@@ -1,1 +1,10 @@
-project_id = "duclndrnymarwhmbtjgl"  
+project_id = "duclndrnymarwhmbtjgl"
+
+[functions.send-otp]
+verify_jwt = false
+
+[functions.verify-otp]
+verify_jwt = false
+
+[functions.aadhaar-auth]
+verify_jwt = false
