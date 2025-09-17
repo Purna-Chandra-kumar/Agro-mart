@@ -3,15 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Mic, Bot } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
+import VoiceAssistant from '@/components/VoiceAssistant';
 
 export default function Auth() {
   const navigate = useNavigate();
   const { isLoading, handleLogin, handleSignup } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [userType, setUserType] = useState<'buyer' | 'farmer'>('buyer');
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -34,6 +38,22 @@ export default function Auth() {
   const switchMode = () => {
     setMode(mode === 'login' ? 'signup' : 'login');
   };
+
+  const handleVoiceAuthSuccess = (data: any) => {
+    setShowVoiceAssistant(false);
+    navigate('/dashboard');
+  };
+
+  if (showVoiceAssistant) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <VoiceAssistant 
+          onAuthSuccess={handleVoiceAuthSuccess}
+          onClose={() => setShowVoiceAssistant(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -69,6 +89,23 @@ export default function Auth() {
                   isLoading={isLoading}
                   onSubmit={onSubmit}
                 />
+              )}
+
+              {userType === 'farmer' && (
+                <div className="text-center mb-4">
+                  <Button
+                    type="button"
+                    onClick={() => setShowVoiceAssistant(true)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Mic className="w-4 h-4 mr-2" />
+                    <Bot className="w-4 h-4 mr-2" />
+                    Voice Assistant (बोल कर साइन अप करें)
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Speak in Hindi, English, or Telugu
+                  </p>
+                </div>
               )}
 
               <div className="text-center">

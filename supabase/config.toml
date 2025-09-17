@@ -6,5 +6,8 @@ verify_jwt = false
 [functions.verify-otp]
 verify_jwt = false
 
+[functions.voice-assistant]
+verify_jwt = false
+
 [functions.aadhaar-auth]
 verify_jwt = false
