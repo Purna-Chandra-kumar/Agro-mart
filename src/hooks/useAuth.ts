@@ -28,16 +28,6 @@ export const useAuth = () => {
     setIsLoading(true);
 
     try {
-      // Only handle buyer email login now - farmers use Aadhaar system
-      if (userType === 'farmer') {
-        toast({
-          title: 'Please use Aadhaar login',
-          description: 'Farmers should use the Aadhaar-based authentication system',
-          variant: 'destructive',
-        });
-        return;
-      }
-
       const { error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -82,16 +72,6 @@ export const useAuth = () => {
     setIsLoading(true);
 
     try {
-      // Only handle buyer signup now - farmers use Aadhaar system
-      if (userType === 'farmer') {
-        toast({
-          title: 'Please use Aadhaar registration',
-          description: 'Farmers should use the Aadhaar-based registration system',
-          variant: 'destructive',
-        });
-        return;
-      }
-
       // Validate password strength
       if (!validatePassword(formData.password)) {
         toast({
@@ -112,7 +92,7 @@ export const useAuth = () => {
         return;
       }
 
-      // Prepare user metadata for buyers
+      // Prepare user metadata
       const userData = {
         name: formData.name,
         user_type: userType,

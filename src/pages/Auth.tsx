@@ -8,6 +8,7 @@ import { Mic, Bot } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
+import FarmerAuthForm from '@/components/auth/FarmerAuthForm';
 import VoiceAssistant from '@/components/VoiceAssistant';
 
 export default function Auth() {
@@ -77,18 +78,27 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value={userType} className="space-y-4">
-              {mode === 'login' ? (
-                <LoginForm 
-                  userType={userType}
+              {userType === 'farmer' ? (
+                <FarmerAuthForm 
+                  mode={mode}
                   isLoading={isLoading}
-                  onSubmit={onSubmit}
                 />
               ) : (
-                <SignupForm 
-                  userType={userType}
-                  isLoading={isLoading}
-                  onSubmit={onSubmit}
-                />
+                <>
+                  {mode === 'login' ? (
+                    <LoginForm 
+                      userType={userType}
+                      isLoading={isLoading}
+                      onSubmit={onSubmit}
+                    />
+                  ) : (
+                    <SignupForm 
+                      userType={userType}
+                      isLoading={isLoading}
+                      onSubmit={onSubmit}
+                    />
+                  )}
+                </>
               )}
 
               {userType === 'farmer' && (
