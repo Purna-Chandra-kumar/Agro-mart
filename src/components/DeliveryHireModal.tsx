@@ -5,19 +5,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Truck, CreditCard, Calculator } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Truck, ShoppingCart, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Profile } from "@/store/supabaseUserStore";
 import { getCurrentLocation } from "@/utils/locationUtils";
+import { staticProducts, type ProductData } from "@/data/productsData";
+import PaymentModal from "./PaymentModal";
 
 interface DeliveryHireModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: Profile;
+  selectedProduct?: ProductData | null;
 }
 
-const DeliveryHireModal = ({ isOpen, onClose, user }: DeliveryHireModalProps) => {
+const DeliveryHireModal = ({ isOpen, onClose, user, selectedProduct }: DeliveryHireModalProps) => {
   const { toast } = useToast();
+  const [currentProduct, setCurrentProduct] = useState<ProductData | null>(selectedProduct || null);
+  const [showProductSelection, setShowProductSelection] = useState(!selectedProduct);
   const [formData, setFormData] = useState({
     pickupAddress: '',
     dropAddress: '',
@@ -25,13 +31,15 @@ const DeliveryHireModal = ({ isOpen, onClose, user }: DeliveryHireModalProps) =>
     contactPhone: user.phone || '',
     specialInstructions: '',
     estimatedDistance: 0,
-    basePrice: 50 // Base price in rupees
+    basePrice: 50, // Base price in rupees
+    quantity: 1,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const pricePerKm = 8; // Rate per km
-  const estimatedCost = formData.basePrice + (formData.estimatedDistance * pricePerKm);
+  const deliveryFee = formData.estimatedDistance * pricePerKm;
+  const productTotal = currentProduct ? (currentProduct.price * formData.quantity) : 0;
+  const totalCost = formData.basePrice + deliveryFee + productTotal;
 
   const handleGetCurrentLocation = async (field: 'pickup' | 'drop') => {
     try {
@@ -68,7 +76,28 @@ const DeliveryHireModal = ({ isOpen, onClose, user }: DeliveryHireModalProps) =>
     });
   };
 
+  const handleProductSelect = (product: ProductData) => {
+    setCurrentProduct(product);
+    setShowProductSelection(false);
+    
+    // Add product to cart automatically (simulate)
+    toast({
+      title: "Product Added to Cart",
+      description: `${product.name} has been added to your cart for delivery.`,
+      className: "bg-green-50 border-green-200"
+    });
+  };
+
   const handleSubmitDelivery = () => {
+    if (!currentProduct) {
+      toast({
+        title: "No product selected",
+        description: "Please select a product for delivery",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!formData.pickupAddress || !formData.dropAddress || !formData.contactPhone) {
       toast({
         title: "Missing information",
@@ -87,47 +116,36 @@ const DeliveryHireModal = ({ isOpen, onClose, user }: DeliveryHireModalProps) =>
       return;
     }
 
-    setShowPayment(true);
+    setShowPaymentModal(true);
   };
 
-  const handlePayment = async () => {
-    setIsSubmitting(true);
+  const handlePaymentSuccess = (transaction: any) => {
+    toast({
+      title: "Delivery Partner Hired!",
+      description: `Payment successful. Transaction ID: ${transaction.transaction_id}. Delivery partner will contact you shortly.`,
+      className: "bg-green-50 border-green-200"
+    });
     
-    try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Payment Successful!",
-        description: `Delivery booked for ₹${estimatedCost}. Delivery partner will contact you shortly.`,
-        className: "bg-green-50 border-green-200"
-      });
-      
-      onClose();
-      setShowPayment(false);
-      
-      // Reset form
-      setFormData(prev => ({
-        ...prev,
-        pickupAddress: '',
-        dropAddress: '',
-        specialInstructions: '',
-        estimatedDistance: 0
-      }));
-      
-    } catch (error) {
-      toast({
-        title: "Payment Failed",
-        description: "Please try again",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Reset form and close
+    setFormData(prev => ({
+      ...prev,
+      pickupAddress: '',
+      dropAddress: '',
+      specialInstructions: '',
+      estimatedDistance: 0,
+      quantity: 1,
+    }));
+    setCurrentProduct(null);
+    setShowProductSelection(!selectedProduct);
+    onClose();
   };
 
-  const handleBackToDetails = () => {
-    setShowPayment(false);
+  const handlePaymentFailure = (error: string) => {
+    toast({
+      title: "Payment Failed",
+      description: `Payment failed: ${error}. Please try again.`,
+      variant: "destructive"
+    });
   };
 
   return (
@@ -143,14 +161,109 @@ const DeliveryHireModal = ({ isOpen, onClose, user }: DeliveryHireModalProps) =>
           </DialogDescription>
         </DialogHeader>
 
-        {!showPayment ? (
-          <div className="space-y-6">
-            {/* Delivery Details */}
+        <div className="space-y-6">
+          {/* Product Selection */}
+          {showProductSelection ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Delivery Details</CardTitle>
+                <CardTitle className="text-lg">Select Product for Delivery</CardTitle>
+                <CardDescription>Choose a product to add to cart and hire delivery</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto">
+                  {staticProducts.slice(0, 6).map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleProductSelect(product)}
+                    >
+                      <div className="flex-1">
+                        <div className="font-semibold">{product.name}</div>
+                        <div className="text-sm text-gray-600">{product.farmerName}</div>
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          {product.category}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-green-600">₹{product.price}/{product.unit}</div>
+                        <div className="text-xs text-gray-500">{product.quantity} {product.unit} available</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Selected Product Summary */}
+              {currentProduct && (
+                <Card className="bg-green-50 border-green-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Selected Product
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold text-lg">{currentProduct.name}</div>
+                        <div className="text-sm text-gray-600">By {currentProduct.farmerName}</div>
+                        <Badge variant="secondary" className="mt-1">
+                          {currentProduct.category}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-green-600 text-lg">
+                          ₹{currentProduct.price}/{currentProduct.unit}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <Label htmlFor="quantity">Quantity:</Label>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, quantity: Math.max(1, prev.quantity - 1) }))}
+                        >
+                          -
+                        </Button>
+                        <span className="px-3 py-1 border rounded">{formData.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, quantity: prev.quantity + 1 }))}
+                        >
+                          +
+                        </Button>
+                        <span className="text-sm text-gray-600">{currentProduct.unit}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between font-semibold">
+                      <span>Product Total:</span>
+                      <span className="text-green-600">₹{productTotal}</span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowProductSelection(true)}
+                    >
+                      Change Product
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Delivery Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Delivery Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="pickup">Pickup Address *</Label>
                   <div className="flex space-x-2">
@@ -246,89 +359,73 @@ const DeliveryHireModal = ({ isOpen, onClose, user }: DeliveryHireModalProps) =>
 
                 {formData.estimatedDistance > 0 && (
                   <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                    {currentProduct && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Product ({formData.quantity} {currentProduct.unit}):</span>
+                          <span>₹{productTotal}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Base Service Fee:</span>
+                          <span>₹{formData.basePrice}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="flex justify-between">
-                      <span>Base Price:</span>
-                      <span>₹{formData.basePrice}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Distance ({formData.estimatedDistance} km × ₹{pricePerKm}/km):</span>
-                      <span>₹{formData.estimatedDistance * pricePerKm}</span>
+                      <span>Delivery Fee ({formData.estimatedDistance} km × ₹{pricePerKm}/km):</span>
+                      <span>₹{deliveryFee}</span>
                     </div>
                     <hr />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total Cost:</span>
-                      <span className="text-green-600">₹{estimatedCost}</span>
+                      <span className="text-green-600">₹{totalCost}</span>
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="flex space-x-4">
-              <Button onClick={handleSubmitDelivery} className="flex-1 bg-green-600 hover:bg-green-700">
-                Proceed to Payment
-              </Button>
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Payment Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5" />
-                  <span>Payment Summary</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span>Pickup:</span>
-                    <span className="text-right flex-1 ml-4">{formData.pickupAddress}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Drop:</span>
-                    <span className="text-right flex-1 ml-4">{formData.dropAddress}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Distance:</span>
-                    <span>{formData.estimatedDistance} km</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Contact:</span>
-                    <span>{formData.contactName} - {formData.contactPhone}</span>
-                  </div>
-                  <hr />
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total Amount:</span>
-                    <span className="text-green-600">₹{estimatedCost}</span>
-                  </div>
-                </div>
+              <div className="flex space-x-4">
+                <Button 
+                  onClick={handleSubmitDelivery} 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={!currentProduct}
+                >
+                  Proceed to Payment
+                </Button>
+                <Button variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
 
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
-                    Payment will be processed securely. Your delivery partner will be assigned after payment confirmation.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex space-x-4">
-              <Button 
-                onClick={handlePayment} 
-                disabled={isSubmitting}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                {isSubmitting ? 'Processing Payment...' : `Pay ₹${estimatedCost}`}
-              </Button>
-              <Button variant="outline" onClick={handleBackToDetails}>
-                Back to Details
-              </Button>
-            </div>
-          </div>
+        {/* Payment Modal */}
+        {currentProduct && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            orderDetails={{
+              productName: currentProduct.name,
+              productPrice: productTotal,
+              deliveryFee: deliveryFee,
+              totalAmount: totalCost,
+              service_type: 'delivery_hire',
+              product_id: currentProduct.id,
+              metadata: {
+                pickup_address: formData.pickupAddress,
+                drop_address: formData.dropAddress,
+                distance: formData.estimatedDistance,
+                quantity: formData.quantity,
+                contact_name: formData.contactName,
+                contact_phone: formData.contactPhone,
+                special_instructions: formData.specialInstructions,
+              },
+            }}
+            onPaymentSuccess={handlePaymentSuccess}
+            onPaymentFailure={handlePaymentFailure}
+          />
         )}
       </DialogContent>
     </Dialog>

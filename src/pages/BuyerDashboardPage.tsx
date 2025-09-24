@@ -111,6 +111,7 @@ const BuyerDashboardPage = () => {
         isOpen={showDeliveryHire}
         onClose={() => setShowDeliveryHire(false)}
         user={user}
+        selectedProduct={null}
       />
     </div>
   );
