@@ -112,23 +112,29 @@ async function createOrder(
 
   const razorpayOrder: RazorpayOrder = await razorpayResponse.json();
 
-  // Store transaction in database
+  // Store transaction in database - handle non-UUID product_id
+  const transactionData: any = {
+    user_id: userId,
+    transaction_id: razorpayOrder.id,
+    payment_method: 'upi',
+    amount: amount,
+    currency: 'INR',
+    status: 'pending',
+    service_type: service_type,
+    delivery_partner_id: delivery_partner_id,
+    payment_gateway: 'razorpay',
+    gateway_order_id: razorpayOrder.id,
+    metadata: metadata,
+  };
+
+  // Only add product_id if it's a valid UUID format
+  if (product_id && isValidUUID(product_id)) {
+    transactionData.product_id = product_id;
+  }
+
   const { data: transaction, error: dbError } = await supabaseClient
     .from('transactions')
-    .insert({
-      user_id: userId,
-      transaction_id: razorpayOrder.id,
-      payment_method: 'upi',
-      amount: amount,
-      currency: 'INR',
-      status: 'pending',
-      service_type: service_type,
-      product_id: product_id,
-      delivery_partner_id: delivery_partner_id,
-      payment_gateway: 'razorpay',
-      gateway_order_id: razorpayOrder.id,
-      metadata: metadata,
-    })
+    .insert(transactionData)
     .select()
     .single();
 
@@ -217,6 +223,11 @@ async function generateSignature(data: string, secret: string): Promise<string> 
   const signature = await crypto.subtle.sign('HMAC', key, dataToSign);
   const hashArray = Array.from(new Uint8Array(signature));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 }
 
 serve(handler);
