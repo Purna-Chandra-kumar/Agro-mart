@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Smartphone, Truck, AlertCircle, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { CreditCard, Smartphone, Truck, AlertCircle, CheckCircle, QrCode, ArrowLeft, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,6 +54,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'selection' | 'qr' | 'processing'>('selection');
+  const [selectedUpiApp, setSelectedUpiApp] = useState<string>('');
+  const [customUpiId, setCustomUpiId] = useState<string>('');
+  const [qrCode, setQrCode] = useState<string>('');
+  const [paymentUrl, setPaymentUrl] = useState<string>('');
+
+  const upiApps = [
+    { id: 'googlepay', name: 'Google Pay', color: 'bg-blue-600', scheme: 'gpay://' },
+    { id: 'phonepe', name: 'PhonePe', color: 'bg-purple-600', scheme: 'phonepe://' },
+    { id: 'paytm', name: 'Paytm', color: 'bg-blue-800', scheme: 'paytmmp://' },
+    { id: 'bhim', name: 'BHIM UPI', color: 'bg-orange-600', scheme: 'bhim://' },
+    { id: 'amazonpay', name: 'Amazon Pay', color: 'bg-orange-500', scheme: 'amazonpay://' },
+    { id: 'whatsapp', name: 'WhatsApp Pay', color: 'bg-green-600', scheme: 'whatsapp://' },
+  ];
 
   useEffect(() => {
     // Load Razorpay script
@@ -75,6 +92,46 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     };
   }, []);
 
+  const generateQRCode = async (upiId: string) => {
+    const amount = orderDetails.totalAmount || orderDetails.total_amount;
+    const upiString = `upi://pay?pa=${upiId}&pn=AgroMart&am=${amount}&cu=INR&tn=Payment for AgroMart products`;
+    
+    // Generate QR code URL (using a simple QR service for demo)
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`;
+    setQrCode(qrCodeUrl);
+    setPaymentUrl(upiString);
+    setCurrentStep('qr');
+  };
+
+  const handleUpiAppSelect = (appId: string) => {
+    setSelectedUpiApp(appId);
+    const selectedApp = upiApps.find(app => app.id === appId);
+    if (selectedApp) {
+      // For demo purposes, using test UPI ID
+      generateQRCode('test@upi');
+    }
+  };
+
+  const handleCustomUpiSubmit = () => {
+    if (!customUpiId.trim()) {
+      toast({
+        title: "UPI ID Required",
+        description: "Please enter a valid UPI ID",
+        variant: "destructive"
+      });
+      return;
+    }
+    generateQRCode(customUpiId);
+  };
+
+  const copyUpiString = () => {
+    navigator.clipboard.writeText(paymentUrl);
+    toast({
+      title: "Copied!",
+      description: "UPI payment string copied to clipboard",
+    });
+  };
+
   const handlePayment = async () => {
     if (!razorpayLoaded) {
       toast({
@@ -87,6 +144,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     setIsProcessing(true);
     setPaymentStatus('processing');
+    setCurrentStep('processing');
 
     try {
       // Create order via edge function
@@ -190,24 +248,69 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleRetry = () => {
     setPaymentStatus('idle');
-    handlePayment();
+    setCurrentStep('selection');
+    setSelectedUpiApp('');
+    setCustomUpiId('');
+    setQrCode('');
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'qr') {
+      setCurrentStep('selection');
+      setSelectedUpiApp('');
+      setCustomUpiId('');
+      setQrCode('');
+    }
+  };
+
+  const simulatePaymentSuccess = () => {
+    // Simulate successful payment for demo
+    setPaymentStatus('success');
+    toast({
+      title: "Payment Successful!",
+      description: `Payment of ₹${orderDetails.totalAmount || orderDetails.total_amount} completed successfully.`,
+      className: "bg-green-50 border-green-200"
+    });
+    
+    // Simulate transaction data
+    const mockTransaction = {
+      id: `txn_${Date.now()}`,
+      amount: orderDetails.totalAmount || orderDetails.total_amount,
+      status: 'success',
+      payment_method: selectedUpiApp || 'custom_upi',
+      upi_id: customUpiId || 'test@upi',
+      timestamp: new Date().toISOString()
+    };
+    
+    onPaymentSuccess(mockTransaction);
+    setTimeout(() => onClose(), 2000);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
+            {currentStep === 'qr' && (
+              <Button variant="ghost" size="sm" onClick={handleBack} className="p-1 h-6 w-6">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             <CreditCard className="h-5 w-5" />
-            <span>Secure Payment</span>
+            <span>
+              {currentStep === 'selection' ? 'Choose Payment Method' : 
+               currentStep === 'qr' ? 'Scan QR Code' : 'Processing Payment'}
+            </span>
           </DialogTitle>
           <DialogDescription>
-            Complete your payment securely with UPI or cards
+            {currentStep === 'selection' ? 'Select your preferred UPI app or enter UPI ID' :
+             currentStep === 'qr' ? 'Scan the QR code with your UPI app' :
+             'Please wait while we process your payment'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Order Summary */}
+          {/* Order Summary - Show on all steps */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Order Summary</CardTitle>
@@ -260,45 +363,123 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </CardContent>
           </Card>
 
-          {/* Payment Methods */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Payment Methods</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Test UPI Info */}
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Smartphone className="h-4 w-4 text-yellow-600" />
-                    <span className="font-medium text-yellow-800">Test Mode - Use these UPI IDs:</span>
+          {/* Step 1: UPI App Selection */}
+          {currentStep === 'selection' && (
+            <>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Smartphone className="h-5 w-5" />
+                    Choose UPI App
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    {upiApps.map((app) => (
+                      <Button
+                        key={app.id}
+                        variant="outline"
+                        className={`h-16 flex flex-col gap-1 ${selectedUpiApp === app.id ? 'ring-2 ring-green-500' : ''}`}
+                        onClick={() => handleUpiAppSelect(app.id)}
+                      >
+                        <div className={`w-6 h-6 rounded ${app.color}`}></div>
+                        <span className="text-xs">{app.name}</span>
+                      </Button>
+                    ))}
                   </div>
-                  <div className="space-y-1 text-sm text-yellow-700">
-                    <div>• <strong>test@upi</strong> - General test UPI</div>
-                    <div>• <strong>success@razorpay</strong> - Simulate success</div>
-                    <div>• <strong>failure@razorpay</strong> - Simulate failure</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-50 border-blue-200">
-                  <div className="flex items-center space-x-3">
-                    <Smartphone className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <div className="font-semibold">UPI Payment</div>
-                      <div className="text-sm text-gray-600">Google Pay, PhonePe, Paytm, BHIM</div>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    Recommended
-                  </Badge>
-                </div>
-                
-                <div className="text-sm text-gray-600 text-center">
-                  Also supports Debit/Credit Cards and Net Banking
-                </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex items-center gap-4">
+                <Separator className="flex-1" />
+                <span className="text-sm text-gray-500">OR</span>
+                <Separator className="flex-1" />
               </div>
-            </CardContent>
-          </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Enter UPI ID</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="upi-id">UPI ID</Label>
+                    <Input
+                      id="upi-id"
+                      placeholder="yourname@paytm"
+                      value={customUpiId}
+                      onChange={(e) => setCustomUpiId(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCustomUpiSubmit}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    disabled={!customUpiId.trim()}
+                  >
+                    Generate QR Code
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Step 2: QR Code Display */}
+          {currentStep === 'qr' && qrCode && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <QrCode className="h-5 w-5" />
+                  Scan QR Code
+                </CardTitle>
+                <CardDescription>
+                  Scan this QR code with your UPI app to complete the payment
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-center">
+                  <img 
+                    src={qrCode} 
+                    alt="UPI QR Code" 
+                    className="w-48 h-48 border rounded-lg"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">UPI Payment String:</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={paymentUrl} 
+                      readOnly 
+                      className="text-xs"
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={copyUpiString}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Instructions:</strong>
+                    <br />• Open your UPI app and scan the QR code
+                    <br />• Or copy the payment string and paste in your UPI app
+                    <br />• Confirm the payment of ₹{orderDetails.totalAmount || orderDetails.total_amount}
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={simulatePaymentSuccess}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  I have completed the payment
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
 
           {/* Payment Status */}
           {paymentStatus === 'processing' && (
@@ -322,39 +503,29 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            {paymentStatus === 'idle' && (
-              <Button 
-                onClick={handlePayment}
-                disabled={isProcessing || !razorpayLoaded}
-                className="w-full bg-green-600 hover:bg-green-700"
-                size="lg"
-              >
-                <Smartphone className="h-4 w-4 mr-2" />
-                Pay ₹{orderDetails.totalAmount || orderDetails.total_amount} Securely
-              </Button>
-            )}
+          {/* Action Buttons - only show cancel/back on selection and QR steps */}
+          {(currentStep === 'selection' || currentStep === 'qr') && paymentStatus !== 'success' && (
+            <div className="space-y-2">
+              {paymentStatus === 'failed' && (
+                <Button 
+                  onClick={handleRetry}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  size="lg"
+                >
+                  Retry Payment
+                </Button>
+              )}
 
-            {paymentStatus === 'failed' && (
               <Button 
-                onClick={handleRetry}
-                className="w-full bg-green-600 hover:bg-green-700"
-                size="lg"
+                variant="outline" 
+                onClick={onClose}
+                className="w-full"
+                disabled={isProcessing}
               >
-                Retry Payment
+                Cancel
               </Button>
-            )}
-
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              className="w-full"
-              disabled={isProcessing}
-            >
-              {paymentStatus === 'processing' ? 'Please wait...' : 'Cancel'}
-            </Button>
-          </div>
+            </div>
+          )}
 
           {/* Security Notice */}
           <div className="text-xs text-gray-500 text-center">
