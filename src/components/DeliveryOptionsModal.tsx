@@ -6,8 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Truck, User, Phone, Star, MapPin, IndianRupee } from "lucide-react";
+import { Truck, User, Phone, Star, MapPin, IndianRupee, ShoppingCart } from "lucide-react";
 import { supabaseUserStore } from "@/store/supabaseUserStore";
+import { useCartStore } from "@/store/cartStore";
+import { toast } from "@/hooks/use-toast";
 
 interface DeliveryPartner {
   id: string;
@@ -37,7 +39,7 @@ interface DeliveryOptionsModalProps {
   onClose: () => void;
   product: ProductWithDistance;
   onDirectBuy: (product: ProductWithDistance, quantity: number) => void;
-  onDeliveryOrder: (product: ProductWithDistance, deliveryPartner: DeliveryPartner, quantity: number) => void;
+  onDeliveryOrder?: (product: ProductWithDistance, deliveryPartner: DeliveryPartner, quantity: number) => void;
 }
 
 const DeliveryOptionsModal = ({
@@ -50,8 +52,9 @@ const DeliveryOptionsModal = ({
   const [selectedOption, setSelectedOption] = useState<'direct' | 'delivery' | null>(null);
   const [selectedDeliveryPartner, setSelectedDeliveryPartner] = useState<DeliveryPartner | null>(null);
   const [orderQuantity, setOrderQuantity] = useState(1);
-  
   const [deliveryPartners, setDeliveryPartners] = useState<DeliveryPartner[]>([]);
+  
+  const { addItem } = useCartStore();
   
   useEffect(() => {
     const loadPartners = async () => {
@@ -67,8 +70,32 @@ const DeliveryOptionsModal = ({
   };
 
   const handleDeliveryOrder = () => {
-    if (selectedDeliveryPartner && orderQuantity > 0) {
+    if (selectedDeliveryPartner && orderQuantity > 0 && onDeliveryOrder) {
       onDeliveryOrder(product, selectedDeliveryPartner, orderQuantity);
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (selectedDeliveryPartner && orderQuantity > 0) {
+      addItem({
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        unit: product.unit,
+        quantity: orderQuantity,
+        deliveryPartnerId: selectedDeliveryPartner.id,
+        deliveryPartnerName: selectedDeliveryPartner.name,
+        deliveryFee: calculateDeliveryFee(selectedDeliveryPartner),
+        farmerName: product.farmerName,
+        farmerPhone: product.farmerPhone
+      });
+      
+      toast({
+        title: "Added to Cart!",
+        description: `${orderQuantity} ${product.unit} of ${product.name} added to your cart.`,
+      });
+      
+      onClose();
     }
   };
 
@@ -292,9 +319,9 @@ const DeliveryOptionsModal = ({
             )}
             
             {selectedOption === 'delivery' && selectedDeliveryPartner && (
-              <Button onClick={handleDeliveryOrder} className="flex-1 bg-green-600 hover:bg-green-700">
-                <IndianRupee className="h-4 w-4 mr-2" />
-                Pay ₹{calculateTotal()} & Order
+              <Button onClick={handleAddToCart} className="flex-1 bg-green-600 hover:bg-green-700">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart
               </Button>
             )}
             

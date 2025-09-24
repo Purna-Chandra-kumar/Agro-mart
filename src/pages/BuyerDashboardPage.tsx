@@ -7,11 +7,15 @@ import { languageStore } from "@/store/languageStore";
 import LanguageSelector from "@/components/LanguageSelector";
 import BuyerDashboard from "@/components/BuyerDashboard";
 import DeliveryHireModal from "@/components/DeliveryHireModal";
+import CartDropdown from "@/components/CartDropdown";
+import { useCartStore } from "@/store/cartStore";
+import { Badge } from "@/components/ui/badge";
 
 const BuyerDashboardPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<Profile | null>(null);
   const [showDeliveryHire, setShowDeliveryHire] = useState(false);
+  const { getItemCount } = useCartStore();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -63,9 +67,22 @@ const BuyerDashboardPage = () => {
               <Button variant="ghost" size="sm">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="sm">
-                <ShoppingCart className="h-5 w-5" />
-              </Button>
+              
+              <CartDropdown
+                trigger={
+                  <Button variant="ghost" size="sm" className="relative">
+                    <ShoppingCart className="h-5 w-5" />
+                    {getItemCount() > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                      >
+                        {getItemCount()}
+                      </Badge>
+                    )}
+                  </Button>
+                }
+              />
               <Button 
                 variant="outline" 
                 size="sm"

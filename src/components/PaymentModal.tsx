@@ -11,14 +11,24 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   orderDetails: {
-    productName: string;
-    productPrice: number;
-    deliveryFee: number;
+    productName?: string;
+    productPrice?: number;
+    deliveryFee?: number;
     totalAmount: number;
     service_type: string;
     product_id?: string;
     delivery_partner_id?: string;
     metadata?: any;
+    items?: Array<{
+      product_name: string;
+      quantity: number;
+      unit: string;
+      price: number;
+      delivery_partner: string;
+      delivery_fee: number;
+    }>;
+    total_amount?: number;
+    delivery_fees?: number;
   };
   onPaymentSuccess: (transaction: any) => void;
   onPaymentFailure: (error: string) => void;
@@ -203,23 +213,49 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <CardTitle className="text-lg">Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span>{orderDetails.productName}</span>
-                <span>₹{orderDetails.productPrice}</span>
-              </div>
-              {orderDetails.deliveryFee > 0 && (
-                <div className="flex justify-between">
-                  <span className="flex items-center">
-                    <Truck className="h-4 w-4 mr-1" />
-                    Delivery Fee
-                  </span>
-                  <span>₹{orderDetails.deliveryFee}</span>
-                </div>
+              {orderDetails.items ? (
+                // Bulk order from cart
+                <>
+                  {orderDetails.items.map((item, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>{item.product_name} ({item.quantity} {item.unit})</span>
+                        <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span className="ml-4">via {item.delivery_partner}</span>
+                        <span>+₹{item.delivery_fee}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <hr />
+                  <div className="flex justify-between">
+                    <span>Total Delivery Fees</span>
+                    <span>₹{orderDetails.delivery_fees || 0}</span>
+                  </div>
+                </>
+              ) : (
+                // Single item order
+                <>
+                  <div className="flex justify-between">
+                    <span>{orderDetails.productName}</span>
+                    <span>₹{orderDetails.productPrice}</span>
+                  </div>
+                  {orderDetails.deliveryFee && orderDetails.deliveryFee > 0 && (
+                    <div className="flex justify-between">
+                      <span className="flex items-center">
+                        <Truck className="h-4 w-4 mr-1" />
+                        Delivery Fee
+                      </span>
+                      <span>₹{orderDetails.deliveryFee}</span>
+                    </div>
+                  )}
+                </>
               )}
               <hr />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total Amount</span>
-                <span className="text-green-600">₹{orderDetails.totalAmount}</span>
+                <span className="text-green-600">₹{orderDetails.totalAmount || orderDetails.total_amount}</span>
               </div>
             </CardContent>
           </Card>
@@ -231,6 +267,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                {/* Test UPI Info */}
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Smartphone className="h-4 w-4 text-yellow-600" />
+                    <span className="font-medium text-yellow-800">Test Mode - Use these UPI IDs:</span>
+                  </div>
+                  <div className="space-y-1 text-sm text-yellow-700">
+                    <div>• <strong>test@upi</strong> - General test UPI</div>
+                    <div>• <strong>success@razorpay</strong> - Simulate success</div>
+                    <div>• <strong>failure@razorpay</strong> - Simulate failure</div>
+                  </div>
+                </div>
+                
                 <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-50 border-blue-200">
                   <div className="flex items-center space-x-3">
                     <Smartphone className="h-5 w-5 text-blue-600" />
@@ -283,7 +332,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 size="lg"
               >
                 <Smartphone className="h-4 w-4 mr-2" />
-                Pay ₹{orderDetails.totalAmount} Securely
+                Pay ₹{orderDetails.totalAmount || orderDetails.total_amount} Securely
               </Button>
             )}
 
