@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Profile } from "@/store/supabaseUserStore";
 import { getCurrentLocation } from "@/utils/locationUtils";
 import { staticProducts, type ProductData } from "@/data/productsData";
+import { useCartStore } from "@/store/cartStore";
 import PaymentModal from "./PaymentModal";
 
 interface DeliveryHireModalProps {
@@ -22,6 +23,7 @@ interface DeliveryHireModalProps {
 
 const DeliveryHireModal = ({ isOpen, onClose, user, selectedProduct }: DeliveryHireModalProps) => {
   const { toast } = useToast();
+  const { addItem } = useCartStore();
   const [currentProduct, setCurrentProduct] = useState<ProductData | null>(selectedProduct || null);
   const [showProductSelection, setShowProductSelection] = useState(!selectedProduct);
   const [formData, setFormData] = useState({
@@ -80,11 +82,10 @@ const DeliveryHireModal = ({ isOpen, onClose, user, selectedProduct }: DeliveryH
     setCurrentProduct(product);
     setShowProductSelection(false);
     
-    // Add product to cart automatically (simulate)
     toast({
-      title: "Product Added to Cart",
-      description: `${product.name} has been added to your cart for delivery.`,
-      className: "bg-green-50 border-green-200"
+      title: "Product Selected",
+      description: `${product.name} selected for delivery hire. Complete the form to add to cart.`,
+      className: "bg-blue-50 border-blue-200"
     });
   };
 
@@ -116,7 +117,40 @@ const DeliveryHireModal = ({ isOpen, onClose, user, selectedProduct }: DeliveryH
       return;
     }
 
-    setShowPaymentModal(true);
+    // Add product to cart with delivery partner details
+    const deliveryFee = formData.estimatedDistance * pricePerKm + formData.basePrice;
+    
+    addItem({
+      productId: currentProduct.id,
+      name: currentProduct.name,
+      price: currentProduct.price,
+      unit: currentProduct.unit,
+      quantity: formData.quantity,
+      deliveryPartnerId: `delivery-${Date.now()}`,
+      deliveryPartnerName: "AgroMart Delivery Service",
+      deliveryFee: deliveryFee,
+      farmerName: currentProduct.farmerName,
+      farmerPhone: currentProduct.farmerPhone,
+    });
+
+    toast({
+      title: "Added to Cart!",
+      description: `${currentProduct.name} with delivery service has been added to your cart. Check the cart icon to proceed with payment.`,
+      className: "bg-green-50 border-green-200"
+    });
+
+    // Close modal and reset
+    onClose();
+    setCurrentProduct(null);
+    setShowProductSelection(!selectedProduct);
+    setFormData(prev => ({
+      ...prev,
+      pickupAddress: '',
+      dropAddress: '',
+      specialInstructions: '',
+      estimatedDistance: 0,
+      quantity: 1,
+    }));
   };
 
   const handlePaymentSuccess = (transaction: any) => {
@@ -391,7 +425,8 @@ const DeliveryHireModal = ({ isOpen, onClose, user, selectedProduct }: DeliveryH
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   disabled={!currentProduct}
                 >
-                  Proceed to Payment
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart & Hire Delivery
                 </Button>
                 <Button variant="outline" onClick={onClose}>
                   Cancel
@@ -401,32 +436,6 @@ const DeliveryHireModal = ({ isOpen, onClose, user, selectedProduct }: DeliveryH
           )}
         </div>
 
-        {/* Payment Modal */}
-        {currentProduct && (
-          <PaymentModal
-            isOpen={showPaymentModal}
-            onClose={() => setShowPaymentModal(false)}
-            orderDetails={{
-              productName: currentProduct.name,
-              productPrice: productTotal,
-              deliveryFee: deliveryFee,
-              totalAmount: totalCost,
-              service_type: 'delivery_hire',
-              product_id: currentProduct.id,
-              metadata: {
-                pickup_address: formData.pickupAddress,
-                drop_address: formData.dropAddress,
-                distance: formData.estimatedDistance,
-                quantity: formData.quantity,
-                contact_name: formData.contactName,
-                contact_phone: formData.contactPhone,
-                special_instructions: formData.specialInstructions,
-              },
-            }}
-            onPaymentSuccess={handlePaymentSuccess}
-            onPaymentFailure={handlePaymentFailure}
-          />
-        )}
       </DialogContent>
     </Dialog>
   );
